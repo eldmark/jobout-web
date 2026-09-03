@@ -1,0 +1,29 @@
+# Levanta SOLO el frontend.
+#
+#   cp docker-compose.example.yml docker-compose.yml
+#   cp .env.example .env.local     # y completá los valores
+#   docker compose up
+#
+# Necesita que el backend esté corriendo aparte, o apuntá NEXT_PUBLIC_API_URL
+# a donde lo tengas.
+#
+# Para levantar backend + frontend juntos con un solo comando, usá el compose
+# de jobout-docs:  cd ../jobout-docs && make dev
+#
+# docker-compose.yml está en .gitignore: es tuyo, tocalo sin miedo.
+
+name: jobout-web
+
+services:
+  web:
+    build:
+      context: .
+      target: dev
+    env_file: .env.local
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      # Anónimos: el node_modules y el caché del contenedor no los pisa el host
+      - /app/node_modules
+      - /app/.next

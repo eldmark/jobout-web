@@ -1,0 +1,28 @@
+# Compose local — se genera con `cp docker-compose.example.yml docker-compose.yml`
+docker-compose.yml
+docker-compose.override.yml
+
+# Secretos — nunca versionar
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Node y Next
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Pruebas
+coverage/
+playwright-report/
+test-results/
+
+# Sistema y editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
