@@ -14,6 +14,12 @@ export interface ApiClientOptions {
   getAccessToken?: () => string | undefined;
   /** Se llama una vez cuando no se pudo recuperar la sesión. Por defecto, ir a /sign-in. */
   onSessionExpired?: () => void;
+  /**
+   * Refresco propio (lado servidor): recibe el refresh token de las cookies, llama a
+   * `/auth/refresh` y devuelve el access token nuevo, o undefined si no se pudo.
+   * Sin esto se usa el refresh por cookie de navegador (`{ access_token }`).
+   */
+  refreshToken?: () => Promise<string | undefined>;
 }
 
 export interface RequestOptions extends Omit<RequestInit, "headers"> {
@@ -51,6 +57,12 @@ export function createApiClient(options: ApiClientOptions) {
   const refresh = (): Promise<boolean> => {
     refreshing ??= (async () => {
       try {
+        if (options.refreshToken) {
+          const nuevo = await options.refreshToken();
+          if (!nuevo) return false;
+          memoryToken = nuevo;
+          return true;
+        }
         const res = await send(REFRESH_PATH, { method: "POST", auth: false });
         if (!res.ok) return false;
         const body = (await res.json()) as { access_token?: string };
