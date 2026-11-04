@@ -1,0 +1,10 @@
+import { es, type MessageKey } from "./es";
+
+export type { MessageKey };
+
+/** Devuelve el texto de la clave. Lanza si no existe: mejor fallar que pintar una clave cruda. */
+export function t(key: MessageKey): string {
+  const value = (es as Record<string, string>)[key];
+  if (value === undefined) throw new Error(`Mensaje inexistente: ${key}`);
+  return value;
+}
