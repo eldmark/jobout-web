@@ -101,3 +101,27 @@ describe("F4 401 -> un refresh -> repetir", () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("refresh personalizado (servidor)", () => {
+  it("usa refreshToken() en lugar del refresh por cookie y repite con el token nuevo", async () => {
+    const vistos: (string | null)[] = [];
+    const fetchImpl = (async (_u: string, init: RequestInit) => {
+      const auth = new Headers(init.headers).get("authorization");
+      vistos.push(auth);
+      return new Response(null, { status: auth === "Bearer nuevo" ? 204 : 401 });
+    }) as unknown as typeof fetch;
+    const refreshToken = vi.fn(async () => "nuevo");
+    const c = createApiClient({ baseUrl: "http://x", fetchImpl, getAccessToken: () => "viejo", refreshToken });
+    const res = await c.request("/api/v1/me");
+    expect(res.status).toBe(204);
+    expect(refreshToken).toHaveBeenCalledTimes(1);
+    expect(vistos).toEqual(["Bearer viejo", "Bearer nuevo"]);
+  });
+  it("si refreshToken() devuelve undefined, sesión expirada", async () => {
+    const fetchImpl = (async () => new Response(null, { status: 401 })) as unknown as typeof fetch;
+    const onSessionExpired = vi.fn();
+    const c = createApiClient({ baseUrl: "http://x", fetchImpl, refreshToken: async () => undefined, onSessionExpired });
+    await expect(c.request("/api/v1/me")).rejects.toThrow();
+    expect(onSessionExpired).toHaveBeenCalledTimes(1);
+  });
+});
