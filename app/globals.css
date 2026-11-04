@@ -13,6 +13,7 @@
   --tenue: color-mix(in srgb, var(--color-ink) 68%, var(--color-white));
   --borde: var(--color-lavender);
   --acento: var(--color-indigo);
+  --superficie: var(--fondo);
 
   --fuente-titulo: var(--font-sora), system-ui, sans-serif;
   --fuente-texto: var(--font-manrope), system-ui, sans-serif;
@@ -25,6 +26,8 @@
     --tenue: color-mix(in srgb, var(--color-lavender) 70%, var(--color-ink));
     --borde: color-mix(in srgb, var(--color-lavender) 18%, var(--color-ink));
     --acento: var(--color-lavender);
+    /* Paneles flotantes (diálogos): un paso más claro que la página para que se distingan. */
+    --superficie: color-mix(in srgb, var(--color-lavender) 9%, var(--color-ink));
   }
 }
 
@@ -229,8 +232,9 @@ a {
   width: min(100%, 30rem);
   max-height: 100%;
   overflow: auto;
-  background: var(--fondo);
+  background: var(--superficie);
   color: var(--texto);
+  border: 1px solid var(--borde);
   border-radius: 0.75rem;
   padding: 1.5rem;
   display: grid;
