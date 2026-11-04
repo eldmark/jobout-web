@@ -4,7 +4,9 @@ export const es = {
   "brand.slogan": "Llega listo a tu primera entrevista.",
   "brand.description": "Prepárate, practica y llega listo a tu primera entrevista en software.",
   "home.badge": "Primeros pasos",
-  "home.notice": "Andamio inicial. La sala de entrevista y el dashboard llegan con sus fases.",
+  "home.notice": "Practica hoy, entra con confianza.",
+  "home.signUp": "Crear cuenta",
+  "home.signIn": "Ya tengo cuenta",
   "auth.sessionExpired": "Tu sesión terminó. Vuelve a iniciar sesión.",
 
   "auth.signUp.title": "Crea tu cuenta",
