@@ -8,7 +8,7 @@ export interface Me {
   plan: { code: string; name: string };
 }
 
-export default function DashboardView({ me }: { me: Me | null }) {
+export default function DashboardView({ me, completeProfile = false }: { me: Me | null; completeProfile?: boolean }) {
   return (
     <main className="pagina">
       <p className="marca">{t("brand.name")}</p>
@@ -21,6 +21,15 @@ export default function DashboardView({ me }: { me: Me | null }) {
             {t("dashboard.plan")} {me.plan.name}
           </p>
           <p className="aviso">{t("dashboard.empty")}</p>
+          {completeProfile ? (
+            <section className="aviso aviso--accion" aria-labelledby="completa-perfil">
+              <h2 id="completa-perfil">{t("dashboard.completeProfile")}</h2>
+              <p>{t("dashboard.completeProfileHint")}</p>
+              <a className="boton boton--coral" href="/profile/cv">
+                {t("dashboard.completeProfile")}
+              </a>
+            </section>
+          ) : null}
         </>
       ) : (
         <>
