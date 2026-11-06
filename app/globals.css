@@ -80,6 +80,55 @@ h3 {
   margin: 0 0 1.5rem;
 }
 
+/* En una tarjeta (display: grid) la etiqueta no se estira: mide lo que su texto. */
+.tarjeta .etiqueta {
+  justify-self: start;
+  width: fit-content;
+  margin: 0;
+}
+
+/* Selector de archivo: el input real queda en el DOM (teclado y lectores), solo oculto a la vista. */
+.archivo {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.campo .archivo__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  padding: 0;
+  margin: -1px;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.archivo__boton {
+  cursor: pointer;
+}
+
+.archivo:focus-within .archivo__boton {
+  outline: 3px solid var(--color-indigo);
+  outline-offset: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .archivo:focus-within .archivo__boton {
+    outline-color: var(--color-coral);
+  }
+}
+
+.archivo__estado {
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+}
+
 .aviso {
   border: 1px solid var(--borde);
   border-radius: 0.5rem;
