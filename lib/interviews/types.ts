@@ -52,6 +52,11 @@ export interface InterviewSummary {
   score?: number | null;
 }
 
+export interface ResumeReply {
+  /** Último turno del recruiter, para continuar sin repetir ni saltar preguntas. */
+  turn: Turn;
+}
+
 export interface TurnReply {
   turn: Turn;
   done: boolean;

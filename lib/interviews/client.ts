@@ -1,6 +1,6 @@
 /** Llamadas del navegador al contrato simulado de entrevistas (/api/*). Nunca ven tokens. */
 import { goTo } from "@/lib/navigate";
-import type { Interview, InterviewScore, InterviewSummary, Level, ProgressPoint, Recruiter, TurnReply } from "./types";
+import type { Interview, InterviewScore, ResumeReply, InterviewSummary, Level, ProgressPoint, Recruiter, TurnReply } from "./types";
 
 export interface Result<T> {
   status: number;
@@ -49,7 +49,7 @@ export const interviewsApi = {
   create: (recruiterId: string, levelId: string) => call<Interview>("/api/interviews", "POST", { recruiter_id: recruiterId, level_id: levelId }),
   get: (id: string) => call<Interview>(base(id)),
   pause: (id: string) => call<null>(`${base(id)}/pause`, "POST"),
-  resume: (id: string) => call<Interview>(`${base(id)}/resume`, "POST"),
+  resume: (id: string) => call<ResumeReply>(`${base(id)}/resume`, "POST"),
   abandon: (id: string) => call<null>(`${base(id)}/abandon`, "POST"),
   finish: (id: string) => call<InterviewScore>(`${base(id)}/finish`, "POST"),
   sendTurn: (id: string, text: string) => call<TurnReply>(`${base(id)}/turns`, "POST", { text }),
