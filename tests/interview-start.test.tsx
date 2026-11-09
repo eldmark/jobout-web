@@ -158,6 +158,8 @@ describe("F14 validación accesible y foco al primer error", () => {
     expect(empezar().tagName).toBe("BUTTON");
     fireEvent.submit(container.querySelector("form")!);
     await vi.waitFor(() => expect(posts(llamadas)).toHaveLength(1), ESPERA);
+    // la navegación llega después del POST: sin esperarla se filtra al test siguiente
+    await vi.waitFor(() => expect(goTo).toHaveBeenCalledTimes(1), ESPERA);
   });
 });
 
