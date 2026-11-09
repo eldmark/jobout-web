@@ -58,3 +58,22 @@ describe("fuentes de marca", () => {
     expect(css).toMatch(/var\(--font-sora\)/);
   });
 });
+
+describe("etiqueta del CV primario y selector de archivo", () => {
+  const regla = (sel: string) =>
+    [...css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(([, s]) => s.trim().split(/\s*,\s*/).includes(sel));
+
+  it("la etiqueta dentro de una tarjeta no se estira a todo el ancho", () => {
+    const cuerpos = regla(".tarjeta .etiqueta").map(([, , c]) => c).join(";");
+    expect(cuerpos).toMatch(/justify-self\s*:\s*start|width\s*:\s*fit-content/);
+    expect(cuerpos).not.toMatch(/width\s*:\s*100%/);
+  });
+  it("el input de archivo se oculta visualmente sin display:none", () => {
+    const cuerpos = regla(".campo .archivo__input").map(([, , c]) => c).join(";");
+    expect(cuerpos).toMatch(/position\s*:\s*absolute/);
+    expect(cuerpos).not.toMatch(/display\s*:\s*none|visibility\s*:\s*hidden/);
+  });
+  it("el foco del input se ve en el control", () => {
+    expect(css).toMatch(/\.archivo:focus-within/);
+  });
+});

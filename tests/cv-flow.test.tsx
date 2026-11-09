@@ -285,3 +285,29 @@ describe("F14 accesibilidad", () => {
     }
   });
 });
+
+describe("selector de archivo en español", () => {
+  it("sin archivo dice «Ningún archivo elegido» y ofrece el botón en español", () => {
+    backend();
+    const { container } = render(<CvFlow />);
+    expect(screen.getByText(t("cv.upload.noFile"))).toBeInTheDocument();
+    expect(screen.getByText(t("cv.upload.choose"))).toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/choose file|no file chosen/i);
+  });
+  it("muestra el nombre del archivo elegido en lugar del estado vacío", () => {
+    backend();
+    render(<CvFlow />);
+    elegir(PDF());
+    expect(screen.getByText("cv.pdf")).toBeInTheDocument();
+    expect(screen.queryByText(t("cv.upload.noFile"))).not.toBeInTheDocument();
+  });
+  it("el input real sigue accesible por etiqueta, tipo file y sin display:none ni hidden", () => {
+    backend();
+    render(<CvFlow />);
+    const input = screen.getByLabelText(t("cv.upload.fileLabel"));
+    expect(input).toHaveAttribute("type", "file");
+    expect(input).not.toHaveAttribute("hidden");
+    expect(input).not.toHaveAttribute("aria-hidden");
+    expect(input.getAttribute("style") ?? "").not.toMatch(/display\s*:\s*none/);
+  });
+});

@@ -49,6 +49,8 @@ export const es = {
   "cv.title": "Sube tu CV",
   "cv.intro": "Leeremos tu CV para proponerte tu experiencia, habilidades e idiomas. Tú decides qué se guarda.",
   "cv.upload.fileLabel": "Elige tu CV",
+  "cv.upload.choose": "Elegir archivo",
+  "cv.upload.noFile": "Ningún archivo elegido",
   "cv.upload.hint": "PDF o DOCX, de hasta 5 MB.",
   "cv.upload.submit": "Subir CV",
   "cv.upload.uploading": "Subiendo…",

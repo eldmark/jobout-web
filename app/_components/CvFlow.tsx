@@ -21,6 +21,8 @@ const INICIAL = { tipo: "elegir" } as Etapa;
 export default function CvFlow() {
   const [etapa, setEtapa] = useState(INICIAL);
   const [archivo, setArchivo] = useState(null as File | null);
+  const [nombre, setNombre] = useState(null as string | null);
+  const entrada = useRef(null as HTMLInputElement | null);
   const [error, setError] = useState(null as MessageKey | null);
   const [subiendo, setSubiendo] = useState(false);
   const [progreso, setProgreso] = useState(0);
@@ -30,6 +32,7 @@ export default function CvFlow() {
     const f = ev.target.files?.[0] ?? null;
     setError(null);
     setArchivo(null);
+    setNombre(f ? f.name : null);
     if (!f) return;
     if (f.size > MAX_CV_BYTES) return setError("cv.error.tooBig");
     if (!isAllowedCvType(f.name, f.type)) return setError("cv.error.badType");
@@ -80,7 +83,15 @@ export default function CvFlow() {
         >
           <div className="campo">
             <label htmlFor="cv-archivo">{t("cv.upload.fileLabel")}</label>
-            <input id="cv-archivo" type="file" accept={CV_ACCEPT} onChange={elegir} disabled={subiendo} aria-describedby="cv-archivo-ayuda" />
+            <div className="archivo">
+              <input ref={entrada} className="archivo__input" id="cv-archivo" type="file" accept={CV_ACCEPT} onChange={elegir} disabled={subiendo} aria-describedby="cv-archivo-ayuda cv-archivo-estado" />
+              <span className="boton boton--borde archivo__boton" aria-hidden="true" onClick={() => entrada.current?.click()}>
+                {t("cv.upload.choose")}
+              </span>
+              <span className="archivo__estado" id="cv-archivo-estado">
+                {nombre ?? t("cv.upload.noFile")}
+              </span>
+            </div>
             <p className="campo__ayuda" id="cv-archivo-ayuda">
               {t("cv.upload.hint")}
             </p>
