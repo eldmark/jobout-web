@@ -1,3 +1,4 @@
+import Link from "next/link";
 import DeleteAccount from "./DeleteAccount";
 import LogoutButton from "./LogoutButton";
 import { t } from "@/lib/messages";
@@ -8,7 +9,16 @@ export interface Me {
   plan: { code: string; name: string };
 }
 
-export default function DashboardView({ me, completeProfile = false }: { me: Me | null; completeProfile?: boolean }) {
+export default function DashboardView({
+  me,
+  completeProfile = false,
+  activeInterviewId = null,
+}: {
+  me: Me | null;
+  completeProfile?: boolean;
+  /** Id de la entrevista en curso o en pausa, si la hay. */
+  activeInterviewId?: string | null;
+}) {
   return (
     <main className="pagina">
       <p className="marca">{t("brand.name")}</p>
@@ -21,6 +31,17 @@ export default function DashboardView({ me, completeProfile = false }: { me: Me 
             {t("dashboard.plan")} {me.plan.name}
           </p>
           <p className="aviso">{t("dashboard.empty")}</p>
+          <p>
+            {activeInterviewId ? (
+              <Link className="boton boton--coral" href={`/interviews/${activeInterviewId}`}>
+                {t("dashboard.resume")}
+              </Link>
+            ) : (
+              <Link className="boton boton--coral" href="/interviews">
+                {t("dashboard.practice")}
+              </Link>
+            )}
+          </p>
           {completeProfile ? (
             <section className="aviso aviso--accion" aria-labelledby="completa-perfil">
               <h2 id="completa-perfil">{t("dashboard.completeProfile")}</h2>

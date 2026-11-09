@@ -266,6 +266,7 @@ describe("F7 fallos y reintento sin perder lo escrito", () => {
   it("fallo de red -> mensaje genérico y el texto se conserva", async () => {
     await abrir((c) => {
       if (c.method === "POST") throw new Error("offline");
+      return undefined;
     });
     escribir("Sin red");
     fireEvent.click(enviarBtn());

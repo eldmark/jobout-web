@@ -71,7 +71,6 @@ export const es = {
   "interview.room.retry": "Reintentar",
   "interview.room.transcript": "Transcripción de la entrevista",
   "interview.room.you": "Tú",
-  "interview.room.lastMessage": "Último mensaje del recruiter:",
   "interview.room.answerLabel": "Tu respuesta",
   "interview.room.answerHint": "Ctrl+Enter para enviar. Hasta 4000 caracteres.",
   "interview.room.send": "Enviar respuesta",
@@ -87,7 +86,6 @@ export const es = {
   "interview.room.abandon": "Abandonar",
   "interview.room.finish": "Terminar y ver mi score",
   "interview.room.resuming": "Retomando…",
-  "interview.room.actionFailed": "No pudimos completar la acción.",
 
   "interview.paused.title": "Tu entrevista está en pausa",
   "interview.paused.text": "Retómala cuando estés listo: seguirás en la misma pregunta.",

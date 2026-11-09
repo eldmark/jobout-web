@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { interviewErrorKey } from "@/lib/interviews/errors";
 import { interviewsApi } from "@/lib/interviews/client";
@@ -74,110 +75,121 @@ export default function InterviewStart() {
     setEnviando(false);
   }
 
+  if (cargaFallo) {
+    return (
+      <main className="pagina">
+        <p className="marca">{t("brand.name")}</p>
+        <h1>{t("interview.start.title")}</h1>
+        <p className="formulario__error" role="alert">
+          {t("interview.start.loadError")}
+        </p>
+        <button type="button" className="boton boton--borde" onClick={() => void cargar()}>
+          {t("interview.start.retry")}
+        </button>
+      </main>
+    );
+  }
+  if (!datos) {
+    return (
+      <main className="pagina" aria-busy="true">
+        <p className="marca">{t("brand.name")}</p>
+        <h1>{t("interview.start.title")}</h1>
+        <p role="status">{t("interview.start.loading")}</p>
+      </main>
+    );
+  }
+
   return (
     <main className="pagina">
       <p className="marca">{t("brand.name")}</p>
       <h1>{t("interview.start.title")}</h1>
       <p className="eslogan">{t("interview.start.intro")}</p>
-      {cargaFallo ? (
-        <>
-          <p className="formulario__error" role="alert">
-            {t("interview.start.loadError")}
+      <form className="formulario" ref={formRef} onSubmit={(ev) => void empezar(ev)} noValidate>
+        <div className="formulario__error" role="alert" aria-live="assertive">
+          {errorGeneral ? t(errorGeneral) : null}
+        </div>
+        {activa ? (
+          <p>
+            <Link className="boton boton--coral" href={`/interviews/${activa}`}>
+              {t("interview.start.resumeActive")}
+            </Link>
           </p>
-          <button type="button" className="boton boton--borde" onClick={() => void cargar()}>
-            {t("interview.start.retry")}
-          </button>
-        </>
-      ) : !datos ? (
-        <p role="status">{t("interview.start.loading")}</p>
-      ) : (
-        <form className="formulario" ref={formRef} onSubmit={(ev) => void empezar(ev)} noValidate>
-          <div className="formulario__error" role="alert" aria-live="assertive">
-            {errorGeneral ? t(errorGeneral) : null}
-          </div>
-          {activa ? (
-            <p>
-              <a className="boton boton--coral" href={`/interviews/${activa}`}>
-                {t("interview.start.resumeActive")}
-              </a>
+        ) : null}
+        <fieldset className="opciones" aria-describedby={errores.recruiter ? "err-recruiter" : undefined} disabled={enviando}>
+          <legend>{t("interview.recruiter.legend")}</legend>
+          {datos.recruiters.map((r) => (
+            <div className="opcion" key={r.id}>
+              <input
+                type="radio"
+                id={`rec-${r.id}`}
+                name="recruiter"
+                value={r.id}
+                checked={recruiterId === r.id}
+                aria-labelledby={`rec-${r.id}-nombre`}
+                aria-describedby={`rec-${r.id}-detalle`}
+                onChange={() => {
+                  setRecruiterId(r.id);
+                  setErrores((x) => ({ ...x, recruiter: undefined }));
+                }}
+              />
+              <label htmlFor={`rec-${r.id}`}>
+                <strong id={`rec-${r.id}-nombre`}>{r.display_name}</strong>
+                <span id={`rec-${r.id}-detalle`} className="campo__ayuda">
+                  {r.role_title}. {r.personality}
+                </span>
+              </label>
+            </div>
+          ))}
+          {errores.recruiter ? (
+            <p className="campo__error" id="err-recruiter">
+              {t(errores.recruiter)}
             </p>
           ) : null}
-          <fieldset className="opciones" aria-describedby={errores.recruiter ? "err-recruiter" : undefined} disabled={enviando}>
-            <legend>{t("interview.recruiter.legend")}</legend>
-            {datos.recruiters.map((r) => (
-              <div className="opcion" key={r.id}>
+        </fieldset>
+        <fieldset className="opciones" aria-describedby={errores.level ? "err-level" : undefined} disabled={enviando}>
+          <legend>{t("interview.level.legend")}</legend>
+          {datos.levels.map((l) => {
+            const motivo = levelReason(l, datos.levels);
+            return (
+              <div className="opcion" key={l.id} data-bloqueado={motivo ? "true" : undefined}>
                 <input
                   type="radio"
-                  id={`rec-${r.id}`}
-                  name="recruiter"
-                  value={r.id}
-                  checked={recruiterId === r.id}
-                  aria-labelledby={`rec-${r.id}-nombre`}
-                  aria-describedby={`rec-${r.id}-detalle`}
+                  id={`lvl-${l.id}`}
+                  name="level"
+                  value={l.id}
+                  checked={levelId === l.id}
+                  disabled={Boolean(motivo)}
+                  aria-describedby={motivo ? `lvl-${l.id}-motivo` : undefined}
                   onChange={() => {
-                    setRecruiterId(r.id);
-                    setErrores((x) => ({ ...x, recruiter: undefined }));
+                    if (motivo) return; // defensa: un nivel bloqueado nunca se elige
+                    setLevelId(l.id);
+                    setErrores((x) => ({ ...x, level: undefined }));
                   }}
                 />
-                <label htmlFor={`rec-${r.id}`}>
-                  <strong id={`rec-${r.id}-nombre`}>{r.display_name}</strong>
-                  <span id={`rec-${r.id}-detalle`} className="campo__ayuda">
-                    {r.role_title}. {r.personality}
-                  </span>
+                <label htmlFor={`lvl-${l.id}`}>
+                  <strong>{l.name}</strong>
                 </label>
+                {motivo ? (
+                  <p className="campo__ayuda" id={`lvl-${l.id}-motivo`}>
+                    {motivo}
+                  </p>
+                ) : null}
               </div>
-            ))}
-            {errores.recruiter ? (
-              <p className="campo__error" id="err-recruiter">
-                {t(errores.recruiter)}
-              </p>
-            ) : null}
-          </fieldset>
-          <fieldset className="opciones" aria-describedby={errores.level ? "err-level" : undefined} disabled={enviando}>
-            <legend>{t("interview.level.legend")}</legend>
-            {datos.levels.map((l) => {
-              const motivo = levelReason(l, datos.levels);
-              return (
-                <div className="opcion" key={l.id} data-bloqueado={motivo ? "true" : undefined}>
-                  <input
-                    type="radio"
-                    id={`lvl-${l.id}`}
-                    name="level"
-                    value={l.id}
-                    checked={levelId === l.id}
-                    disabled={Boolean(motivo)}
-                    aria-describedby={motivo ? `lvl-${l.id}-motivo` : undefined}
-                    onChange={() => {
-                      if (motivo) return; // defensa: un nivel bloqueado nunca se elige
-                      setLevelId(l.id);
-                      setErrores((x) => ({ ...x, level: undefined }));
-                    }}
-                  />
-                  <label htmlFor={`lvl-${l.id}`}>
-                    <strong>{l.name}</strong>
-                  </label>
-                  {motivo ? (
-                    <p className="campo__ayuda" id={`lvl-${l.id}-motivo`}>
-                      {motivo}
-                    </p>
-                  ) : null}
-                </div>
-              );
-            })}
-            {errores.level ? (
-              <p className="campo__error" id="err-level">
-                {t(errores.level)}
-              </p>
-            ) : null}
-          </fieldset>
-          <button className="boton boton--coral" type="submit" disabled={enviando} aria-busy={enviando}>
-            {enviando ? t("interview.start.submitting") : t("interview.start.submit")}
-          </button>
-          <p className="formulario__pie">
-            <a href="/interviews/progress">{t("interview.start.progressLink")}</a>
-          </p>
-        </form>
-      )}
+            );
+          })}
+          {errores.level ? (
+            <p className="campo__error" id="err-level">
+              {t(errores.level)}
+            </p>
+          ) : null}
+        </fieldset>
+        <button className="boton boton--coral" type="submit" disabled={enviando} aria-busy={enviando}>
+          {enviando ? t("interview.start.submitting") : t("interview.start.submit")}
+        </button>
+        <p className="formulario__pie">
+          <Link href="/interviews/progress">{t("interview.start.progressLink")}</Link>
+        </p>
+      </form>
     </main>
   );
 }

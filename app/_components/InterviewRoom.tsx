@@ -1,20 +1,42 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import ConfirmDialog from "./ConfirmDialog";
 import InterviewResult, { DeleteSession, SessionDeleted } from "./InterviewResult";
 import { interviewErrorKey, isRetryable } from "@/lib/interviews/errors";
-import { interviewsApi } from "@/lib/interviews/client";
+import { interviewsApi, isOk } from "@/lib/interviews/client";
 import { MAX_ANSWER_CHARS, type Interview, type InterviewScore, type InterviewStatus, type Turn } from "@/lib/interviews/types";
 import { t, tf, type MessageKey } from "@/lib/messages";
 
 type Dialogo = "pause" | "abandon" | "finish";
 
-const TEXTOS: Record<Dialogo, { title: MessageKey; confirm: MessageKey; working: MessageKey; cancel: MessageKey }> = {
-  pause: { title: "interview.pause.title", confirm: "interview.pause.confirm", working: "interview.pause.working", cancel: "interview.pause.cancel" },
-  abandon: { title: "interview.abandon.title", confirm: "interview.abandon.confirm", working: "interview.abandon.working", cancel: "interview.abandon.cancel" },
-  finish: { title: "interview.finish.title", confirm: "interview.finish.confirm", working: "interview.finish.working", cancel: "interview.finish.cancel" },
+const TEXTOS: Record<Dialogo, { titulo: MessageKey; confirm: MessageKey; working: MessageKey; cancel: MessageKey }> = {
+  pause: { titulo: "interview.pause.title", confirm: "interview.pause.confirm", working: "interview.pause.working", cancel: "interview.pause.cancel" },
+  abandon: { titulo: "interview.abandon.title", confirm: "interview.abandon.confirm", working: "interview.abandon.working", cancel: "interview.abandon.cancel" },
+  finish: { titulo: "interview.finish.title", confirm: "interview.finish.confirm", working: "interview.finish.working", cancel: "interview.finish.cancel" },
 };
+
+function DialogoDetalle({ tipo, borrador }: { tipo: Dialogo; borrador: boolean }) {
+  if (tipo === "pause") {
+    return (
+      <>
+        <p>{t("interview.pause.warning")}</p>
+        <p>{t("interview.pause.expires")}</p>
+        {borrador ? <p>{t("interview.pause.draft")}</p> : null}
+      </>
+    );
+  }
+  if (tipo === "abandon") {
+    return (
+      <>
+        <p>{t("interview.abandon.warning")}</p>
+        <p>{t("interview.abandon.keeps")}</p>
+      </>
+    );
+  }
+  return <p>{t("interview.finish.warning")}</p>;
+}
 
 const porSeq = (a: Turn, b: Turn) => a.seq - b.seq;
 
@@ -93,7 +115,7 @@ export default function InterviewRoom({ id }: { id: string }) {
     enfocar.current = true;
     if (r.data) {
       const { turn, done } = r.data;
-      setTurnos((ts) => [...ts, { seq: turn.seq - 1, speaker: "candidate", kind: "answer", text: texto.trim() }, turn].sort(porSeq));
+      setTurnos((ts) => [...ts, { seq: turn.seq - 1, speaker: "candidate" as const, kind: "answer" as const, text: texto.trim() }, turn].sort(porSeq));
       if (done) setStatus("completed");
       return;
     }
@@ -135,7 +157,7 @@ export default function InterviewRoom({ id }: { id: string }) {
     const r = d === "pause" ? await interviewsApi.pause(id) : d === "abandon" ? await interviewsApi.abandon(id) : await interviewsApi.finish(id);
     enDialogo.current = false;
     setTrabajando(false);
-    if (r.status >= 200 && r.status < 300) {
+    if (isOk(r.status)) {
       setDialogo(null);
       if (d === "pause") setStatus("paused");
       if (d === "abandon") setStatus("abandoned");
@@ -154,7 +176,7 @@ export default function InterviewRoom({ id }: { id: string }) {
     setRetomando(true);
     setErrorAccion(null);
     const r = await interviewsApi.resume(id);
-    if (r.status >= 200 && r.status < 300) await cargar();
+    if (isOk(r.status)) await cargar();
     else if (r.status !== 401) setErrorAccion(interviewErrorKey(r.status, r.error));
     enRetomar.current = false;
     setRetomando(false);
@@ -168,9 +190,9 @@ export default function InterviewRoom({ id }: { id: string }) {
           {t(cargaError)}
         </p>
         {cargaError === "interview.error.notFound" ? (
-          <a className="boton boton--coral" href="/interviews">
+          <Link className="boton boton--coral" href="/interviews">
             {t("interview.result.practiceAgain")}
-          </a>
+          </Link>
         ) : (
           <button type="button" className="boton boton--borde" onClick={() => void cargar()}>
             {t("interview.room.retry")}
@@ -186,8 +208,12 @@ export default function InterviewRoom({ id }: { id: string }) {
       </main>
     );
   }
-  if (borrada) return <SessionDeleted />;
-  if (status === "completed") return <InterviewResult id={id} initial={resultado} />;
+  if (borrada) {
+    return <SessionDeleted />;
+  }
+  if (status === "completed") {
+    return <InterviewResult id={id} initial={resultado} />;
+  }
   if (status === "abandoned") {
     return (
       <main className="pagina">
@@ -195,9 +221,9 @@ export default function InterviewRoom({ id }: { id: string }) {
         <h1>{t("interview.abandoned.title")}</h1>
         <p>{t("interview.abandoned.text")}</p>
         <div className="acciones">
-          <a className="boton boton--coral" href="/interviews">
+          <Link className="boton boton--coral" href="/interviews">
             {t("interview.result.practiceAgain")}
-          </a>
+          </Link>
           <DeleteSession id={id} onDeleted={() => setBorrada(true)} />
         </div>
       </main>
@@ -313,21 +339,8 @@ export default function InterviewRoom({ id }: { id: string }) {
       )}
 
       {dialogo && textos ? (
-        <ConfirmDialog titleKey={textos.title} confirmKey={textos.confirm} workingKey={textos.working} cancelKey={textos.cancel} working={trabajando} error={errorDialogo} onConfirm={() => void confirmar()} onCancel={cerrarDialogo}>
-          {dialogo === "pause" ? (
-            <>
-              <p>{t("interview.pause.warning")}</p>
-              <p>{t("interview.pause.expires")}</p>
-              {respuesta.trim() ? <p>{t("interview.pause.draft")}</p> : null}
-            </>
-          ) : dialogo === "abandon" ? (
-            <>
-              <p>{t("interview.abandon.warning")}</p>
-              <p>{t("interview.abandon.keeps")}</p>
-            </>
-          ) : (
-            <p>{t("interview.finish.warning")}</p>
-          )}
+        <ConfirmDialog titleKey={textos.titulo} confirmKey={textos.confirm} workingKey={textos.working} cancelKey={textos.cancel} working={trabajando} error={errorDialogo} onConfirm={() => void confirmar()} onCancel={cerrarDialogo}>
+          <DialogoDetalle tipo={dialogo} borrador={respuesta.trim() !== ""} />
         </ConfirmDialog>
       ) : null}
     </main>

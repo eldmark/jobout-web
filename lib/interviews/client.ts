@@ -10,6 +10,9 @@ export interface Result<T> {
   sessionId: string | null;
 }
 
+/** true para cualquier 2xx. */
+export const isOk = (status: number): boolean => status >= 200 && status < 300;
+
 async function call<T>(url: string, method = "GET", json?: unknown): Promise<Result<T>> {
   let res: Response;
   try {
@@ -29,7 +32,7 @@ async function call<T>(url: string, method = "GET", json?: unknown): Promise<Res
   } catch {
     cuerpo = null;
   }
-  if (res.status >= 200 && res.status < 300) return { status: res.status, data: (cuerpo as T) ?? null, error: null, sessionId: null };
+  if (isOk(res.status)) return { status: res.status, data: (cuerpo as T) ?? null, error: null, sessionId: null };
   const o = (cuerpo ?? {}) as { error?: unknown; session_id?: unknown };
   return {
     status: res.status,
