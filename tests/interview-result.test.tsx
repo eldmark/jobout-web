@@ -1,6 +1,7 @@
 /** F9, F10, F12: resultado con su porqué, confianza oculta si es nula, y borrar la sesión. */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
+import { dobleClic } from "./helpers/doble";
 import { jsonRes, stubFetch, type Llamada } from "./helpers/backend";
 import { SID, SCORE } from "./helpers/interview";
 import { t } from "@/lib/messages";
@@ -130,8 +131,7 @@ describe("F12 borrar la sesión", () => {
     await cargado();
     abrir();
     const ok = screen.getByRole("button", { name: t("interview.delete.confirm") });
-    fireEvent.click(ok);
-    fireEvent.click(ok);
+    dobleClic(ok);
     expect(await screen.findByRole("heading", { name: t("interview.deleted.title") }, ESPERA)).toBeInTheDocument();
     expect(screen.getByText(t("interview.deleted.text"))).toBeInTheDocument();
     expect(llamadas.filter((c) => c.method === "DELETE")).toHaveLength(1);

@@ -1,6 +1,7 @@
 /** F3 (primera pregunta), F4–F8, F13 y F14 en la conversación. */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
+import { dobleClic } from "./helpers/doble";
 import { jsonRes, stubFetch, type Llamada } from "./helpers/backend";
 import { SID, SESION, SCORE, T1 } from "./helpers/interview";
 import { t, tf } from "@/lib/messages";
@@ -151,8 +152,7 @@ describe("F5 enviar", () => {
     const { llamadas } = await abrir((c) => (c.method === "POST" && c.url.endsWith("/turns") ? jsonRes(201, RESPUESTA) : undefined));
     escribir("Una respuesta");
     const b = enviarBtn();
-    fireEvent.click(b);
-    fireEvent.click(b);
+    dobleClic(b);
     fireEvent.keyDown(campo(), { key: "Enter", ctrlKey: true });
     await vi.waitFor(() => expect(campo()).toBeEnabled(), ESPERA);
     expect(llamadasA(llamadas, "/turns")).toHaveLength(1);
@@ -316,8 +316,7 @@ describe("F8 pausar, retomar, abandonar y terminar", () => {
     const { llamadas } = await abrir((c) => (c.method === "POST" && c.url.endsWith("/pause") ? jsonRes(204) : undefined));
     fireEvent.click(screen.getByRole("button", { name: t("interview.room.pause") }));
     const ok = screen.getByRole("button", { name: t("interview.pause.confirm") });
-    fireEvent.click(ok);
-    fireEvent.click(ok);
+    dobleClic(ok);
     expect(await screen.findByRole("heading", { name: t("interview.paused.title") }, ESPERA)).toBeInTheDocument();
     expect(llamadasA(llamadas, "/pause")).toHaveLength(1);
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -345,8 +344,7 @@ describe("F8 pausar, retomar, abandonar y terminar", () => {
     const { llamadas } = backend(reanudable(), SESION({ status: "paused" }));
     render(<InterviewRoom id={SID} />);
     const retomar = await screen.findByRole("button", { name: t("interview.room.resume") }, ESPERA);
-    fireEvent.click(retomar);
-    fireEvent.click(retomar);
+    dobleClic(retomar);
     await screen.findByRole("textbox", {}, ESPERA);
     expect(llamadasA(llamadas, "/resume")).toHaveLength(1);
   });
@@ -368,8 +366,7 @@ describe("F8 pausar, retomar, abandonar y terminar", () => {
 
     fireEvent.click(screen.getByRole("button", { name: t("interview.room.abandon") }));
     const ok = screen.getByRole("button", { name: t("interview.abandon.confirm") });
-    fireEvent.click(ok);
-    fireEvent.click(ok);
+    dobleClic(ok);
     expect(await screen.findByRole("heading", { name: t("interview.abandoned.title") }, ESPERA)).toBeInTheDocument();
     expect(llamadasA(llamadas, "/abandon")).toHaveLength(1);
     expect(screen.getByRole("link", { name: t("interview.result.practiceAgain") })).toHaveAttribute("href", "/interviews");
@@ -386,8 +383,7 @@ describe("F8 pausar, retomar, abandonar y terminar", () => {
     fireEvent.click(screen.getByRole("button", { name: t("interview.room.finish") }));
     expect(llamadasA(llamadas, "/finish")).toHaveLength(0);
     const ok = screen.getByRole("button", { name: t("interview.finish.confirm") });
-    fireEvent.click(ok);
-    fireEvent.click(ok);
+    dobleClic(ok);
     expect(await screen.findByRole("heading", { name: t("interview.result.title") }, ESPERA)).toBeInTheDocument();
     expect(llamadasA(llamadas, "/finish")).toHaveLength(1);
   });

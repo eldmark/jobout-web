@@ -1,6 +1,7 @@
 /** F2, F3, F13, F14: elegir recruiter y nivel, y empezar una sola vez. */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
+import { dobleClic } from "./helpers/doble";
 import { jsonRes, stubFetch, type Llamada } from "./helpers/backend";
 import { SID, SESION, RECRUITERS, LEVELS } from "./helpers/interview";
 import { t, tf } from "@/lib/messages";
@@ -95,8 +96,7 @@ describe("F3 empezar crea la sesión una sola vez", () => {
     render(<InterviewStart />);
     await elegir();
     const b = empezar();
-    fireEvent.click(b);
-    fireEvent.click(b);
+    dobleClic(b);
     fireEvent.submit(b.closest("form")!);
     await vi.waitFor(() => expect(goTo).toHaveBeenCalledWith(`/interviews/${SID}`), ESPERA);
     expect(posts(llamadas)).toHaveLength(1);
