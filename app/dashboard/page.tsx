@@ -7,6 +7,25 @@ import { backendUrl } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
+/** true solo si SABEMOS que no hay CV ni skills; ante cualquier duda no se molesta a la persona. */
+async function needsProfile(access: string): Promise<boolean> {
+  try {
+    const headers = { authorization: `Bearer ${access}` };
+    const base = `${backendUrl()}/api/v1`;
+    const [cvs, perfil] = await Promise.all([
+      fetch(`${base}/cvs`, { headers, cache: "no-store" }),
+      fetch(`${base}/profile`, { headers, cache: "no-store" }),
+    ]);
+    if (!cvs.ok || !perfil.ok) return false;
+    const listaCvs: unknown = await cvs.json().catch(() => null);
+    const datos: { skills?: unknown } | null = await perfil.json().catch(() => null);
+    if (!Array.isArray(listaCvs) || !datos || !Array.isArray(datos.skills)) return false;
+    return listaCvs.length === 0 && datos.skills.length === 0;
+  } catch {
+    return false;
+  }
+}
+
 /** Las páginas del servidor no pueden escribir cookies: si el access expiró, se redirige a
  * /api/auth/refresh, que renueva y vuelve aquí (`?refreshed=1` evita un bucle). */
 export default async function Dashboard({
@@ -35,5 +54,6 @@ export default async function Dashboard({
     const data: Partial<Me> | null = await res.json().catch(() => null);
     if (data && typeof data.first_name === "string" && data.plan) me = data as Me;
   }
-  return <DashboardView me={me} />;
+  const completeProfile = me ? await needsProfile(access) : false;
+  return <DashboardView me={me} completeProfile={completeProfile} />;
 }
