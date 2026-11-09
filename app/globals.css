@@ -400,3 +400,144 @@ progress {
   width: 100%;
   accent-color: var(--color-indigo);
 }
+
+/* --- Entrevista --- */
+.solo-lectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.opciones {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.opciones legend {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 1.125rem;
+  padding: 0;
+  margin-bottom: 0.5rem;
+}
+
+.opcion {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.75rem;
+  align-items: start;
+  border: 1px solid var(--borde);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+}
+
+.opcion input[type="radio"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0.25rem 0 0;
+  accent-color: var(--color-indigo);
+}
+
+.opcion label {
+  display: grid;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.opcion .campo__ayuda {
+  grid-column: 2;
+}
+
+.opcion[data-bloqueado="true"] label {
+  color: var(--tenue);
+  cursor: not-allowed;
+}
+
+.etiqueta-estado {
+  margin: 0 0 1rem;
+  font-weight: 700;
+  color: var(--tenue);
+}
+
+.conversacion {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.mensaje {
+  border: 1px solid var(--borde);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+}
+
+.mensaje p {
+  margin: 0.25rem 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.mensaje[data-autor="recruiter"] {
+  background: var(--color-lavender);
+  color: var(--color-ink);
+}
+
+.mensaje--pendiente {
+  opacity: 0.65;
+}
+
+.datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.dato {
+  border: 1px solid var(--borde);
+  border-radius: 0.75rem;
+  padding: 1rem 1.5rem;
+}
+
+.dato dt {
+  font-size: 0.875rem;
+  color: var(--tenue);
+}
+
+.dato dd {
+  margin: 0;
+}
+
+.dato__cifra {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 1.75rem;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla th,
+.tabla td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--borde);
+}
+
+textarea {
+  resize: vertical;
+}

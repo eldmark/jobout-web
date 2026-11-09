@@ -26,6 +26,20 @@ async function needsProfile(access: string): Promise<boolean> {
   }
 }
 
+/** Id de la entrevista en curso o en pausa; null ante cualquier duda (lista caída, forma rara). */
+async function activeInterview(access: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${backendUrl()}/api/v1/interviews`, { headers: { authorization: `Bearer ${access}` }, cache: "no-store" });
+    if (!res.ok) return null;
+    const lista: unknown = await res.json().catch(() => null);
+    if (!Array.isArray(lista)) return null;
+    const activa = (lista as { id?: unknown; status?: unknown }[]).find((s) => (s.status === "in_progress" || s.status === "paused") && typeof s.id === "string");
+    return activa ? (activa.id as string) : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Las páginas del servidor no pueden escribir cookies: si el access expiró, se redirige a
  * /api/auth/refresh, que renueva y vuelve aquí (`?refreshed=1` evita un bucle). */
 export default async function Dashboard({
@@ -54,6 +68,6 @@ export default async function Dashboard({
     const data: Partial<Me> | null = await res.json().catch(() => null);
     if (data && typeof data.first_name === "string" && data.plan) me = data as Me;
   }
-  const completeProfile = me ? await needsProfile(access) : false;
-  return <DashboardView me={me} completeProfile={completeProfile} />;
+  const [completeProfile, activeInterviewId] = me ? await Promise.all([needsProfile(access), activeInterview(access)]) : [false, null];
+  return <DashboardView me={me} completeProfile={completeProfile} activeInterviewId={activeInterviewId} />;
 }

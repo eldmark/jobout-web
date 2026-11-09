@@ -26,6 +26,13 @@ interface Opciones {
   headers?: HeadersInit;
   /** "json": reenvía el JSON validado; "bytes": reenvía el archivo; "none": solo estado. */
   ok: Record<number, "json" | "bytes" | "none">;
+  /**
+   * Errores permitidos por estado (por defecto, los de CV). Una lista = códigos del backend que se
+   * reenvían tal cual; un texto = se informa siempre ese código, sin mirar el cuerpo.
+   */
+  errors?: Record<number, readonly string[] | string>;
+  /** Campos UUID del cuerpo de error que se conservan (p. ej. `session_id`). Lo demás se descarta. */
+  echo?: readonly string[];
 }
 
 export async function forward(request: Request, o: Opciones): Promise<Response> {
@@ -67,10 +74,22 @@ export async function forward(request: Request, o: Opciones): Promise<Response> 
     return new Response(res.body, { status: 200, headers: h });
   }
 
-  const esperado = CODIGOS_POR_ESTADO[res.status];
-  if (esperado) {
-    const data = (await res.json().catch(() => null)) as { error?: unknown } | null;
-    if (data?.error === esperado) return errorJson(res.status, esperado, h);
+  const permitido = o.errors?.[res.status] ?? CODIGOS_POR_ESTADO[res.status];
+  if (typeof permitido === "string" && o.errors) return errorJson(res.status, permitido, h);
+  if (permitido) {
+    const lista = typeof permitido === "string" ? [permitido] : permitido;
+    const data = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+    const codigo = data?.error;
+    if (typeof codigo === "string" && lista.includes(codigo)) {
+      const extra: Record<string, string> = {};
+      for (const campo of o.echo ?? []) {
+        const v = data?.[campo];
+        if (typeof v === "string" && UUID_RE.test(v)) extra[campo] = v;
+      }
+      if (Object.keys(extra).length === 0) return errorJson(res.status, codigo, h);
+      h.set("content-type", "application/json");
+      return new Response(JSON.stringify({ error: codigo, ...extra }), { status: res.status, headers: h });
+    }
   }
   return errorJson(502, "servicio_no_disponible", h);
 }
