@@ -104,7 +104,7 @@ export default function InterviewStart() {
       <p className="marca">{t("brand.name")}</p>
       <h1>{t("interview.start.title")}</h1>
       <p className="eslogan">{t("interview.start.intro")}</p>
-      <form className="formulario" ref={formRef} onSubmit={(ev) => void empezar(ev)} noValidate>
+      <form method="post" className="formulario" ref={formRef} onSubmit={(ev) => void empezar(ev)} noValidate>
         <div className="formulario__error" role="alert" aria-live="assertive">
           {errorGeneral}
         </div>
