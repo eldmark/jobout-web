@@ -129,7 +129,7 @@ export default function InterviewSessions() {
       <p className="marca">{t("brand.name")}</p>
       <h1>{t("interview.sessions.title")}</h1>
       <p className="solo-lectores" role="status">
-        {tf("interview.sessions.shown", { n: filas.length })}
+        {filas.length === 1 ? t("interview.sessions.shownOne") : tf("interview.sessions.shown", { n: filas.length })}
       </p>
       <table className="tabla" ref={tabla} aria-label={t("interview.sessions.title")}>
         <thead>
