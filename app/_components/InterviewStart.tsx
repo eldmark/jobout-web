@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { interviewErrorKey } from "@/lib/interviews/errors";
+import { interviewErrorText } from "@/lib/interviews/errors";
 import { interviewsApi } from "@/lib/interviews/client";
 import type { Level, Recruiter } from "@/lib/interviews/types";
 import { goTo } from "@/lib/navigate";
@@ -27,7 +27,7 @@ export default function InterviewStart() {
   const [recruiterId, setRecruiterId] = useState("");
   const [levelId, setLevelId] = useState("");
   const [errores, setErrores] = useState({} as { recruiter?: MessageKey; level?: MessageKey });
-  const [errorGeneral, setErrorGeneral] = useState(null as MessageKey | null);
+  const [errorGeneral, setErrorGeneral] = useState(null as string | null);
   const [activa, setActiva] = useState(null as string | null);
   const [enviando, setEnviando] = useState(false);
   const enVuelo = useRef(false);
@@ -37,7 +37,7 @@ export default function InterviewStart() {
     setCargaFallo(false);
     setDatos(null);
     const [r, l] = await Promise.all([interviewsApi.recruiters(), interviewsApi.levels()]);
-    if (r.data && l.data) setDatos({ recruiters: r.data, levels: [...l.data].sort((a, b) => a.position - b.position) });
+    if (r.data && l.data) setDatos({ recruiters: r.data.items, levels: [...l.data.items].sort((a, b) => a.position - b.position) });
     else if (r.status !== 401 && l.status !== 401) setCargaFallo(true);
   }, []);
 
@@ -68,7 +68,7 @@ export default function InterviewStart() {
       return; // se queda «enviando» mientras el navegador cambia de página
     }
     if (r.status !== 401) {
-      setErrorGeneral(interviewErrorKey(r.status, r.error));
+      setErrorGeneral(interviewErrorText(r));
       if (r.error === "sesion_en_curso") setActiva(r.sessionId);
     }
     enVuelo.current = false;
@@ -106,7 +106,7 @@ export default function InterviewStart() {
       <p className="eslogan">{t("interview.start.intro")}</p>
       <form className="formulario" ref={formRef} onSubmit={(ev) => void empezar(ev)} noValidate>
         <div className="formulario__error" role="alert" aria-live="assertive">
-          {errorGeneral ? t(errorGeneral) : null}
+          {errorGeneral}
         </div>
         {activa ? (
           <p>
@@ -188,6 +188,8 @@ export default function InterviewStart() {
         </button>
         <p className="formulario__pie">
           <Link href="/interviews/progress">{t("interview.start.progressLink")}</Link>
+          {" · "}
+          <Link href="/interviews/sessions">{t("interview.start.sessionsLink")}</Link>
         </p>
       </form>
     </main>

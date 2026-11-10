@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { interviewsApi } from "@/lib/interviews/client";
+import { formatDate } from "@/lib/interviews/format";
 import type { Level, ProgressPoint } from "@/lib/interviews/types";
 import { t, tf } from "@/lib/messages";
 
@@ -29,8 +30,8 @@ export default function ProgressView() {
     const [l, p] = await Promise.all([interviewsApi.levels(), interviewsApi.progress()]);
     if (l.data && p.data) {
       setDatos({
-        levels: [...l.data].sort((a, b) => a.position - b.position),
-        serie: [...p.data].sort((a, b) => a.completed_at.localeCompare(b.completed_at)),
+        levels: [...l.data.items].sort((a, b) => a.position - b.position),
+        serie: [...p.data.items].sort((a, b) => a.completed_at.localeCompare(b.completed_at)),
       });
     } else if (l.status !== 401 && p.status !== 401) {
       setFallo(true);
@@ -111,7 +112,7 @@ export default function ProgressView() {
               <tbody>
                 {datos.serie.map((p) => (
                   <tr key={p.session_id}>
-                    <td>{new Date(p.completed_at).toLocaleDateString("es")}</td>
+                    <td>{formatDate(p.completed_at)}</td>
                     <td>{p.level}</td>
                     <td>{p.recruiter}</td>
                     <td>{p.score}</td>

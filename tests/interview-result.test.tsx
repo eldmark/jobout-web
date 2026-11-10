@@ -4,7 +4,7 @@ import { render, screen, fireEvent, cleanup, within } from "@testing-library/rea
 import { dobleClic } from "./helpers/doble";
 import { jsonRes, stubFetch, type Llamada } from "./helpers/backend";
 import { SID, SCORE } from "./helpers/interview";
-import { t } from "@/lib/messages";
+import { t, tf } from "@/lib/messages";
 import InterviewResult from "@/app/_components/InterviewResult";
 
 vi.mock("@/lib/navigate", () => ({ goTo: vi.fn() }));
@@ -38,7 +38,10 @@ describe("F9 resultado", () => {
     const items = within(lista).getAllByRole("listitem");
     expect(items).toHaveLength(2);
     expect(items[0]).toHaveTextContent("Estructura de la respuesta");
-    expect(items[0]).toHaveTextContent("85");
+    expect(items[0]).toHaveTextContent(tf("interview.result.points", { score: 45, max: 50 }));
+    expect(items[0]).toHaveTextContent("45 / 50");
+    expect(items[1]).toHaveTextContent("33 / 50");
+    expect(items[0]).not.toHaveTextContent(t("interview.result.outOf"));
     expect(items[0]).toHaveTextContent(t("interview.result.why"));
     expect(items[0]).toHaveTextContent("Ordenaste tu historia en situación, acción y resultado.");
     expect(items[1]).toHaveTextContent("Faltaron cifras o resultados medibles.");
@@ -66,6 +69,20 @@ describe("F9 resultado", () => {
     await cargado();
     expect(screen.getByRole("link", { name: t("interview.result.practiceAgain") })).toHaveAttribute("href", "/interviews");
     expect(screen.getByRole("link", { name: t("interview.result.progressLink") })).toHaveAttribute("href", "/interviews/progress");
+  });
+  it("el desglose muestra puntos obtenidos sobre el máximo de cada criterio, y suman el score", async () => {
+    const sc = SCORE();
+    expect(sc.breakdown.reduce((a, c) => a + c.score, 0)).toBe(sc.score);
+    backend(SCORE({ breakdown: [{ criterion: "a", label: "A", score: 0, max_points: 10, why: "x" }] }));
+    render(<InterviewResult id={SID} />);
+    await cargado();
+    expect(screen.getByText("A").closest("li")).toHaveTextContent("0 / 10");
+  });
+  it("enlaza a la transcripción de la sesión terminada", async () => {
+    backend();
+    render(<InterviewResult id={SID} />);
+    await cargado();
+    expect(screen.getByRole("link", { name: t("interview.result.transcriptLink") })).toHaveAttribute("href", `/interviews/${SID}/transcript`);
   });
   it("si falla, error anunciado y reintento", async () => {
     let falla = true;

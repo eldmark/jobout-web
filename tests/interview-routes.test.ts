@@ -2,7 +2,7 @@
 /** F1/F13 (capa servidor): reenvío seguro de entrevistas hacia el contrato simulado de core-api. */
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { jsonRes, stubFetch } from "./helpers/backend";
-import { SID, SESION, SCORE, RECRUITERS, LEVELS, PROGRESO, REC_ID, LVL_ID } from "./helpers/interview";
+import { SID, SESION, SCORE, RECRUITERS, LEVELS, PROGRESO, REC_ID, LVL_ID, RESUMEN, T1, items, pagina } from "./helpers/interview";
 import * as recruiters from "@/app/api/recruiters/route";
 import * as levels from "@/app/api/levels/route";
 import * as progress from "@/app/api/progress/route";
@@ -32,10 +32,10 @@ afterEach(() => {
 
 describe("lecturas: recruiters, niveles, progreso y lista", () => {
   const casos: [string, () => Promise<Response>, string, unknown][] = [
-    ["recruiters", () => recruiters.GET(rq("/api/recruiters")), "/api/v1/recruiters", RECRUITERS],
-    ["levels", () => levels.GET(rq("/api/levels")), "/api/v1/levels", LEVELS],
-    ["progress", () => progress.GET(rq("/api/progress")), "/api/v1/progress", PROGRESO],
-    ["interviews", () => interviews.GET(rq("/api/interviews")), "/api/v1/interviews", [SESION({ turns: undefined })]],
+    ["recruiters", () => recruiters.GET(rq("/api/recruiters")), "/api/v1/recruiters", items(RECRUITERS)],
+    ["levels", () => levels.GET(rq("/api/levels")), "/api/v1/levels", items(LEVELS)],
+    ["progress", () => progress.GET(rq("/api/progress")), "/api/v1/progress", items(PROGRESO)],
+    ["interviews", () => interviews.GET(rq("/api/interviews")), "/api/v1/interviews", pagina([RESUMEN()], null)],
   ];
   for (const [nombre, llamar, ruta, cuerpo] of casos) {
     it(`GET ${nombre} reenvía con Bearer a ${ruta} y devuelve el JSON`, async () => {
@@ -50,6 +50,45 @@ describe("lecturas: recruiters, niveles, progreso y lista", () => {
       expect(res.headers.get("cache-control")).toBe("no-store");
     });
   }
+});
+
+describe("GET /api/interviews pagina por cursor y filtra por status", () => {
+  const url = "http://core-api:8080/api/v1/interviews";
+  it("reenvía limit, cursor y status al backend", async () => {
+    const { llamadas } = stubFetch(() => jsonRes(200, pagina([RESUMEN()], "sig")));
+    const res = await interviews.GET(rq("/api/interviews?limit=5&cursor=abc_-.~%3D&status=completed"));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual(pagina([RESUMEN()], "sig"));
+    const u = new URL(llamadas[0].url);
+    expect(`${u.origin}${u.pathname}`).toBe(url);
+    expect(Object.fromEntries(u.searchParams)).toEqual({ limit: "5", cursor: "abc_-.~=", status: "completed" });
+  });
+  it("sin parámetros no inventa ninguno", async () => {
+    const { llamadas } = stubFetch(() => jsonRes(200, pagina([])));
+    await interviews.GET(rq("/api/interviews"));
+    expect(llamadas[0].url).toBe(url);
+  });
+  it("ignora parámetros que no son del contrato", async () => {
+    const { llamadas } = stubFetch(() => jsonRes(200, pagina([])));
+    await interviews.GET(rq("/api/interviews?status=paused&user_id=9&sql=x"));
+    expect(llamadas[0].url).toBe(`${url}?status=paused`);
+  });
+  for (const q of ["limit=0", "limit=51", "limit=-1", "limit=abc", "limit=2.5", "status=otro", "status=", "cursor=", `cursor=${"a".repeat(600)}`, "cursor=%3Cscript%3E"]) {
+    it(`${q.slice(0, 30)} -> 422 datos_invalidos sin tocar el backend`, async () => {
+      const { fn } = stubFetch(() => jsonRes(200, pagina([])));
+      const res = await interviews.GET(rq(`/api/interviews?${q}`));
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({ error: "datos_invalidos" });
+      expect(fn).not.toHaveBeenCalled();
+    });
+  }
+  it("acepta los bordes limit=1 y limit=50 y los cuatro estados", async () => {
+    const { llamadas } = stubFetch(() => jsonRes(200, pagina([])));
+    for (const q of ["limit=1", "limit=50", "status=in_progress", "status=paused", "status=completed", "status=abandoned"]) {
+      expect((await interviews.GET(rq(`/api/interviews?${q}`))).status).toBe(200);
+    }
+    expect(llamadas).toHaveLength(6);
+  });
 });
 
 describe("crear y leer una sesión", () => {
@@ -103,7 +142,7 @@ describe("acciones sobre una sesión", () => {
   for (const [nombre, handler] of acciones) {
     it(`POST ${nombre} -> 204 hacia /interviews/{id}/${nombre}`, async () => {
       const esperado = nombre === "resume" ? 200 : 204;
-      const { llamadas } = stubFetch(() => (esperado === 204 ? jsonRes(204) : jsonRes(200, SESION())));
+      const { llamadas } = stubFetch(() => (esperado === 204 ? jsonRes(204) : jsonRes(200, { turn: T1 })));
       const res = await handler(rq(`/api/interviews/${SID}/${nombre}`, "POST"), ctx(SID));
       expect(res.status).toBe(esperado);
       expect(llamadas[0]).toMatchObject({ method: "POST", url: `http://core-api:8080/api/v1/interviews/${SID}/${nombre}` });
@@ -119,6 +158,19 @@ describe("acciones sobre una sesión", () => {
     expect(corta.status).toBe(422);
     expect(await corta.json()).toEqual({ error: "entrevista_muy_corta" });
   });
+  it("finish: 409 estado_invalido y turno_en_proceso se conservan; score en una sesión sin terminar -> 409 estado_invalido", async () => {
+    for (const codigo of ["estado_invalido", "turno_en_proceso"]) {
+      stubFetch(() => jsonRes(409, { error: codigo }));
+      const res = await finish.POST(rq(`/api/interviews/${SID}/finish`, "POST"), ctx(SID));
+      expect([res.status, await res.json()]).toEqual([409, { error: codigo }]);
+    }
+    stubFetch(() => jsonRes(409, { error: "estado_invalido" }));
+    const sc = await score.GET(rq(`/api/interviews/${SID}/score`), ctx(SID));
+    expect([sc.status, await sc.json()]).toEqual([409, { error: "estado_invalido" }]);
+    stubFetch(() => jsonRes(409, { error: "estado_invalido" }));
+    const rs = await resume.POST(rq(`/api/interviews/${SID}/resume`, "POST"), ctx(SID));
+    expect([rs.status, await rs.json()]).toEqual([409, { error: "estado_invalido" }]);
+  });
   it("GET score reenvía", async () => {
     const { llamadas } = stubFetch(() => jsonRes(200, SCORE()));
     const res = await score.GET(rq(`/api/interviews/${SID}/score`), ctx(SID));
@@ -132,6 +184,20 @@ describe("acciones sobre una sesión", () => {
     expect(res.status).toBe(201);
     expect(await res.json()).toEqual(cuerpo);
     expect(llamadas[0].body).toEqual({ text: "Hice una API" });
+  });
+  it("turns: el texto se recorta y el límite de 4000 cuenta caracteres Unicode, no unidades UTF-16", async () => {
+    const cuerpo = { turn: { seq: 2, speaker: "recruiter", kind: "closing", text: "ok" }, done: false };
+    const { llamadas } = stubFetch(() => jsonRes(201, cuerpo));
+    const emojis = "😀".repeat(4000); // 8000 unidades UTF-16, 4000 caracteres
+    for (const text of [emojis, `  ${"a".repeat(4000)}  \n`]) {
+      expect((await turns.POST(rq(`/api/interviews/${SID}/turns`, "POST", { text }), ctx(SID))).status).toBe(201);
+    }
+    expect(llamadas.map((c) => (c.body as { text: string }).text)).toEqual([emojis, "a".repeat(4000)]);
+    const { fn } = stubFetch(() => jsonRes(201, cuerpo));
+    for (const text of ["😀".repeat(4001), `${"a".repeat(4000)}😀`, `  ${"ñ".repeat(4001)} `]) {
+      expect((await turns.POST(rq(`/api/interviews/${SID}/turns`, "POST", { text }), ctx(SID))).status).toBe(422);
+    }
+    expect(fn).not.toHaveBeenCalled();
   });
   it("turns: texto vacío o de más de 4000 caracteres -> 422 sin backend", async () => {
     const { fn } = stubFetch(() => jsonRes(201, {}));
@@ -154,6 +220,8 @@ describe("acciones sobre una sesión", () => {
 describe("errores del contrato (F13): solo códigos conocidos, nunca texto del backend", () => {
   const casos: [number, string, Record<string, unknown>][] = [
     [403, "nivel_bloqueado", { error: "nivel_bloqueado" }],
+    [403, "limite_del_plan", { error: "limite_del_plan" }],
+    [403, "cuenta_no_disponible", { error: "cuenta_no_disponible" }],
     [409, "nivel_no_disponible", { error: "nivel_no_disponible" }],
     [409, "turno_en_proceso", { error: "turno_en_proceso" }],
     [409, "estado_invalido", { error: "estado_invalido" }],
@@ -169,6 +237,29 @@ describe("errores del contrato (F13): solo códigos conocidos, nunca texto del b
       expect(await res.json()).toEqual({ error: codigo });
     });
   }
+  it("403 limite_del_plan conserva renews_at (ISO 8601)", async () => {
+    stubFetch(() => jsonRes(403, { error: "limite_del_plan", message: "texto", renews_at: "2026-12-01T00:00:00Z" }));
+    const res = await interviews.POST(rq("/api/interviews", "POST", { recruiter_id: REC_ID, level_id: LVL_ID }));
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({ error: "limite_del_plan", renews_at: "2026-12-01T00:00:00Z" });
+  });
+  it("403 limite_del_plan con un renews_at que no es una fecha no lo reenvía", async () => {
+    for (const renews_at of ["<script>", "mañana", 5, "2026-12-01"]) {
+      stubFetch(() => jsonRes(403, { error: "limite_del_plan", renews_at }));
+      const res = await interviews.POST(rq("/api/interviews", "POST", { recruiter_id: REC_ID, level_id: LVL_ID }));
+      expect(await res.json()).toEqual({ error: "limite_del_plan" });
+    }
+  });
+  it("429 reenvía Retry-After solo si son segundos; nunca otro encabezado", async () => {
+    stubFetch(() => new Response(JSON.stringify({ error: "demasiados_intentos" }), { status: 429, headers: { "retry-after": "30", "x-interno": "1" } }));
+    const res = await turns.POST(rq(`/api/interviews/${SID}/turns`, "POST", { text: "hola" }), ctx(SID));
+    expect(res.status).toBe(429);
+    expect(res.headers.get("retry-after")).toBe("30");
+    expect(res.headers.get("x-interno")).toBeNull();
+    stubFetch(() => new Response("{}", { status: 429, headers: { "retry-after": "Wed, 21 Oct 2026 07:28:00 GMT" } }));
+    const otra = await turns.POST(rq(`/api/interviews/${SID}/turns`, "POST", { text: "hola" }), ctx(SID));
+    expect(otra.headers.get("retry-after")).toBeNull();
+  });
   it("un 503 sin código ni cuerpo igual se informa como motor_no_disponible", async () => {
     stubFetch(() => new Response("upstream down", { status: 503 }));
     const res = await turns.POST(rq(`/api/interviews/${SID}/turns`, "POST", { text: "hola" }), ctx(SID));

@@ -16,14 +16,32 @@ export const LEVELS = [
   { id: "44444444-4444-4444-8444-444444444444", code: "mckinsey", name: "McKinsey", position: 5, available: false, unlocked: false, min_score_to_unlock: 80, best_score: null, sessions_completed: 0 },
 ];
 
+export const CREADA = "2026-11-09T09:00:00Z";
 export const T1 = { seq: 1, speaker: "recruiter", kind: "question", text: "Cuéntame sobre un proyecto del que te sientas orgulloso." };
+/** Todo listado del contrato es `{items}`; solo GET /interviews añade `next_cursor`. */
+export const items = <T>(lista: T[]) => ({ items: lista });
+export const pagina = <T>(lista: T[], next_cursor: string | null = null) => ({ items: lista, next_cursor });
+/** Turno de la persona: kind siempre "answer". */
+export const RESP = (seq: number, text: string) => ({ seq, speaker: "applicant", kind: "answer", text });
 
 export const SESION = (over: Record<string, unknown> = {}) => ({
   id: SID,
   status: "in_progress",
   recruiter: { id: REC_ID, display_name: "Ana", role_title: "Reclutadora de talento" },
   level: { id: LVL_ID, code: "junior", name: "Junior" },
+  created_at: CREADA,
   turns: [T1],
+  ...over,
+});
+
+export const RESUMEN = (over: Record<string, unknown> = {}) => ({
+  id: SID,
+  status: "completed",
+  level: { id: LVL_ID, code: "junior", name: "Junior" },
+  recruiter: { id: REC_ID, display_name: "Ana" },
+  score: 78,
+  created_at: CREADA,
+  completed_at: "2026-11-09T09:30:00Z",
   ...over,
 });
 
@@ -32,8 +50,8 @@ export const SCORE = (over: Record<string, unknown> = {}) => ({
   clarity: 81,
   confidence: null,
   breakdown: [
-    { criterion: "structure", label: "Estructura de la respuesta", score: 85, why: "Ordenaste tu historia en situación, acción y resultado." },
-    { criterion: "examples", label: "Ejemplos concretos", score: 60, why: "Faltaron cifras o resultados medibles." },
+    { criterion: "structure", label: "Estructura de la respuesta", score: 45, max_points: 50, why: "Ordenaste tu historia en situación, acción y resultado." },
+    { criterion: "examples", label: "Ejemplos concretos", score: 33, max_points: 50, why: "Faltaron cifras o resultados medibles." },
   ],
   improvements: ["Añade un resultado medible a cada historia.", "Menciona qué decidiste tú y no solo el equipo."],
   rubric_version: 1,

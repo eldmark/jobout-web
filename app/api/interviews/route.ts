@@ -1,7 +1,7 @@
-import { crear, reenviar } from "@/lib/interviews/server";
+import { crear, listar } from "@/lib/interviews/server";
 
 export async function GET(request: Request): Promise<Response> {
-  return reenviar(request, { method: "GET", path: "/interviews", ok: { 200: "json" } });
+  return listar(request);
 }
 
 export async function POST(request: Request): Promise<Response> {
