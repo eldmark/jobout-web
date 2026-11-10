@@ -1,6 +1,18 @@
+/* Capas, de menor a mayor prioridad: el tema de Tailwind, los estilos de siempre («legacy») y
+   las utilidades de Tailwind. Así una clase utilitaria gana a una regla vieja sin pelear por
+   especificidad, y las reglas viejas no tocan los componentes nuevos. Sin preflight: las
+   pantallas que no usan Tailwind se ven exactamente igual que antes. */
+@layer theme, legacy, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
 /* Tokens de marca: se declaran UNA sola vez aquí (ver documentation/identidad-visual.md).
-   Los componentes usan var(--color-*); nadie escribe un hex a mano. */
-:root {
+   `@theme` los publica como variables CSS en :root (static: siempre, aunque ninguna utilidad
+   los use) y crea las utilidades bg-indigo, text-coral, etc. `--color-*: initial` borra la
+   paleta por defecto de Tailwind: en este proyecto solo existen los colores de la marca.
+   Los componentes usan los tokens; nadie escribe un hex a mano. */
+@theme static {
+  --color-*: initial;
   --color-indigo: #5b4bff;
   --color-ink: #14122b;
   --color-coral: #ff6b4a;
@@ -8,6 +20,13 @@
   --color-lavender: #ece9ff;
   --color-white: white;
 
+  --font-display: var(--font-sora), system-ui, sans-serif;
+  --font-sans: var(--font-manrope), system-ui, sans-serif;
+}
+
+/* Estilos de siempre: alias de color por tema, páginas y componentes sin Tailwind. */
+@layer legacy {
+:root {
   --fondo: var(--color-white);
   --texto: var(--color-ink);
   --tenue: color-mix(in srgb, var(--color-ink) 68%, var(--color-white));
@@ -541,3 +560,4 @@ progress {
 textarea {
   resize: vertical;
 }
+} /* fin de @layer legacy */
