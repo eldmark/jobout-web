@@ -74,6 +74,7 @@ export default function CvFlow() {
         <h1>{t("cv.title")}</h1>
         <p className="eslogan">{t("cv.intro")}</p>
         <form
+          method="post"
           className="formulario"
           noValidate
           onSubmit={(ev) => {

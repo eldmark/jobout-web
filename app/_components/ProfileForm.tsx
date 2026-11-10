@@ -146,7 +146,7 @@ export default function ProfileForm({ initial, catalogs, mode, submitLabel, busy
   const mensaje = serverError ? t(serverError) : errs.length ? t("form.error.summary") : null;
 
   return (
-    <form className="formulario" noValidate onSubmit={enviar}>
+    <form method="post" className="formulario" noValidate onSubmit={enviar}>
       <div className="campo">
         <label htmlFor={fieldId("description")}>{t("form.description")}</label>
         <textarea {...campoErr(fieldId("description"))} rows={4} value={f.description} onChange={(ev) => set("description", ev.target.value)} />

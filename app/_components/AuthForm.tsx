@@ -72,7 +72,7 @@ export default function AuthForm({ kind }: { kind: Kind }) {
   }
 
   return (
-    <form className="formulario" onSubmit={enviar} noValidate>
+    <form method="post" className="formulario" onSubmit={enviar} noValidate>
       <div className="formulario__error" role="alert" aria-live="assertive">
         {errorGeneral ? t(errorGeneral) : null}
       </div>

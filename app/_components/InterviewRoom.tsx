@@ -288,7 +288,7 @@ export default function InterviewRoom({ id }: { id: string }) {
             ) : null}
           </ol>
 
-          <form className="formulario" onSubmit={alEnviar} noValidate>
+          <form method="post" className="formulario" onSubmit={alEnviar} noValidate>
             <div className="campo">
               <label htmlFor="resp">{t("interview.room.answerLabel")}</label>
               <textarea
