@@ -204,6 +204,17 @@ describe("«Cargar más» con cursor", () => {
     fireEvent.click(mas()!);
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(tf("interview.sessions.shown", { n: 5 })), ESPERA);
   });
+  it("BUG-002: con una sola entrevista lo dice en singular; con varias, en plural", async () => {
+    paginado({ "": pagina([RESUMEN({ id: SID })], null) });
+    render(<InterviewSessions />);
+    await listo();
+    expect(screen.getByRole("status")).toHaveTextContent(/^Mostrando 1 entrevista\.$/);
+    cleanup();
+    paginado(PAGINAS());
+    render(<InterviewSessions />);
+    await listo();
+    expect(screen.getByRole("status")).toHaveTextContent(/^Mostrando 3 entrevistas\.$/);
+  });
 });
 
 describe("accesibilidad", () => {
