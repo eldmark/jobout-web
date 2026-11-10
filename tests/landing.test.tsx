@@ -58,7 +58,20 @@ describe("Portada", () => {
     for (const r of RECRUITERS) expect(frase).not.toHaveTextContent(t(`home.recruiters.${r}.name` as MessageKey));
   });
 
-  it("la pastilla del titular tiene ancho fijo: mide con todos los tipos de entrevista", () => {
+  // Revisión de Lázaro: sin el rectángulo coral. «Practica entrevistas» arriba y, debajo, el tipo
+  // de entrevista en un color que resalte: coral en oscuro e índigo en claro (el coral sobre
+  // blanco da 2.8:1 y no cumple contraste ni como texto grande).
+  it("el tipo de entrevista va debajo de «Practica entrevistas», sin caja de fondo y en color de marca", () => {
+    render(<Home />);
+    const etiqueta = screen.getByText(t("home.hero.practice"));
+    const rotativo = etiqueta.closest("p")!.querySelector("[data-medida]")!.parentElement!;
+    expect(etiqueta.compareDocumentPosition(rotativo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(rotativo.className).not.toMatch(/(^|\s)bg-/);
+    expect(rotativo).toHaveClass("text-indigo", "dark:text-coral");
+    expect(rotativo.className).not.toMatch(/(^|\s)text-coral\b/);
+  });
+
+  it("el titular rotativo tiene ancho fijo: mide con todos los tipos de entrevista", () => {
     render(<Home />);
     const frase = screen.getByText(t("home.hero.practice"), { exact: false }).closest("p")!;
     const medidas = [...frase.querySelectorAll("[data-medida]")].map((m) => m.textContent);

@@ -100,6 +100,9 @@ describe("TextRotate", () => {
       expect(m).toHaveAttribute("aria-hidden", "true");
     }
     expect(leido(container)).toBe("Ana");
+    // Si un texto se partiera en dos renglones, la altura cambiaría solo con ese texto y
+    // movería lo que está debajo: con ancho fijo, el texto visible no se parte.
+    expect(container.querySelector("[data-actual]")).toHaveClass("flex-nowrap");
   });
 
   it("sin anchoFijo no agrega copias de medida", () => {
