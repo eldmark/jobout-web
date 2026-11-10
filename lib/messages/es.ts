@@ -89,6 +89,7 @@ export const es = {
   "home.levels.mckinsey.name": "McKinsey",
   "home.levels.mckinsey.detail": "Con 80 puntos en Google.",
   "home.levels.soon": "Muy pronto",
+  "home.levels.step": "Nivel {n}",
   "home.cta.title": "¿Listo para tu primera práctica?",
   "home.cta.body": "Solo necesitas un correo y una contraseña.",
   "home.cta.privacy": "Tus datos son tuyos: puedes borrar tu cuenta y todo lo que guardaste cuando quieras.",

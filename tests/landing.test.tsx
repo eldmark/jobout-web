@@ -3,7 +3,7 @@ import { describe, it, expect, afterEach } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import Home from "@/app/page";
-import { t, type MessageKey } from "@/lib/messages";
+import { t, tf, type MessageKey } from "@/lib/messages";
 import { es } from "@/lib/messages/es";
 
 afterEach(cleanup);
@@ -108,6 +108,9 @@ describe("Portada", () => {
     );
     for (const li of items.slice(2)) expect(li).toHaveTextContent(t("home.levels.soon"));
     for (const li of items.slice(0, 2)) expect(li).not.toHaveTextContent(t("home.levels.soon"));
+    // El orden lo dice cada tarjeta («Nivel 1»…); ya no hay una línea decorativa por detrás.
+    items.forEach((li, i) => expect(li).toHaveTextContent(tf("home.levels.step", { n: i + 1 })));
+    expect(lista.parentElement!.querySelector(".bg-gradient-to-r")).toBeNull();
   });
 
   it("V3: fondos animados decorativos; la vista previa de la sala tiene descripción y su maqueta se oculta", () => {

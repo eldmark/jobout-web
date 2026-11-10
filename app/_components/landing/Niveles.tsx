@@ -2,7 +2,7 @@ import Reveal from "@/app/_components/ui/reveal";
 import Titular from "@/app/_components/landing/Titular";
 import { IconoCandado, IconoCheck } from "@/app/_components/landing/iconos";
 import { cn } from "@/lib/cn";
-import { t, type MessageKey } from "@/lib/messages";
+import { t, tf, type MessageKey } from "@/lib/messages";
 
 /** Los cinco niveles de la Fase 3. Amazon, Google y McKinsey existen pero todavía no se pueden practicar. */
 const NIVELES = [
@@ -22,8 +22,9 @@ export default function Niveles() {
         <Reveal>
           <Titular id="niveles-titulo" antetitulo={t("home.levels.eyebrow")} titulo={t("home.levels.title")} bajada={t("home.levels.lead")} />
         </Reveal>
-        <ol aria-label={t("home.levels.title")} className="relative mt-16 grid list-none gap-4 p-0 md:grid-cols-5">
-          <span aria-hidden="true" className="absolute top-7 right-[10%] left-[10%] hidden h-0.5 bg-gradient-to-r from-mint via-indigo/40 to-ink/10 md:block dark:to-white/10" />
+        {/* El orden lo dice la etiqueta «Nivel N» de cada tarjeta: una línea por detrás se cruzaba
+            con las tarjetas punteadas, que son transparentes. */}
+        <ol aria-label={t("home.levels.title")} className="mt-16 grid list-none gap-4 p-0 md:grid-cols-5">
           {NIVELES.map(({ clave, disponible }, i) => (
             <li key={clave} className="relative">
               <Reveal delay={i * 0.1} className="h-full">
@@ -36,6 +37,14 @@ export default function Niveles() {
                   )}
                 >
                   <span
+                    className={cn(
+                      "mb-4 text-xs font-bold tracking-[0.18em] uppercase",
+                      disponible ? "text-indigo dark:text-coral" : "text-ink/50 dark:text-lavender/50",
+                    )}
+                  >
+                    {tf("home.levels.step", { n: i + 1 })}
+                  </span>
+                  <span
                     aria-hidden="true"
                     className={cn(
                       "relative flex size-14 items-center justify-center rounded-full",
@@ -47,11 +56,11 @@ export default function Niveles() {
                   <h3 className={cn("mt-4 font-display text-lg font-bold", disponible ? "text-ink dark:text-white" : "text-ink/50 dark:text-lavender/50")}>
                     {t(k(clave, "name"))}
                   </h3>
-                  <p className={cn("mt-1 text-sm", disponible ? "text-ink/70 dark:text-lavender/75" : "text-ink/50 dark:text-lavender/50")}>
+                  <p className={cn("mt-1 mb-4 text-sm", disponible ? "text-ink/70 dark:text-lavender/75" : "text-ink/50 dark:text-lavender/50")}>
                     {t(k(clave, "detail"))}
                   </p>
                   {disponible ? null : (
-                    <span className="mt-3 rounded-full bg-lavender px-3 py-1 text-xs font-bold text-indigo dark:bg-white/10 dark:text-lavender">
+                    <span className="mt-auto rounded-full bg-lavender px-3 py-1 text-xs font-bold text-indigo dark:bg-white/10 dark:text-lavender">
                       {t("home.levels.soon")}
                     </span>
                   )}
