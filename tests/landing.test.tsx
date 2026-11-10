@@ -49,6 +49,15 @@ describe("Portada", () => {
     }
   });
 
+  // Revisión de Lázaro: quien entra por primera vez no sabe quiénes son Ana o Martín. El texto que
+  // rota en la portada dice qué se practica; los recruiters se presentan más abajo.
+  it("el titular rotativo dice qué tipo de entrevista se practica, sin nombres de recruiters", () => {
+    render(<Home />);
+    const frase = screen.getByText(t("home.hero.practice"), { exact: false }).closest("p")!;
+    expect(frase.querySelector(".sr-only")).toHaveTextContent(t("home.hero.kind.technical"));
+    for (const r of RECRUITERS) expect(frase).not.toHaveTextContent(t(`home.recruiters.${r}.name` as MessageKey));
+  });
+
   it("explica cómo funciona en tres pasos", () => {
     render(<Home />);
     const seccion = document.getElementById("como-funciona")!;
