@@ -1,6 +1,18 @@
+/* Capas, de menor a mayor prioridad: el tema de Tailwind, los estilos de siempre («legacy») y
+   las utilidades de Tailwind. Así una clase utilitaria gana a una regla vieja sin pelear por
+   especificidad, y las reglas viejas no tocan los componentes nuevos. Sin preflight: las
+   pantallas que no usan Tailwind se ven exactamente igual que antes. */
+@layer theme, legacy, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
 /* Tokens de marca: se declaran UNA sola vez aquí (ver documentation/identidad-visual.md).
-   Los componentes usan var(--color-*); nadie escribe un hex a mano. */
-:root {
+   `@theme` los publica como variables CSS en :root (static: siempre, aunque ninguna utilidad
+   los use) y crea las utilidades bg-indigo, text-coral, etc. `--color-*: initial` borra la
+   paleta por defecto de Tailwind: en este proyecto solo existen los colores de la marca.
+   Los componentes usan los tokens; nadie escribe un hex a mano. */
+@theme static {
+  --color-*: initial;
   --color-indigo: #5b4bff;
   --color-ink: #14122b;
   --color-coral: #ff6b4a;
@@ -8,6 +20,13 @@
   --color-lavender: #ece9ff;
   --color-white: white;
 
+  --font-display: var(--font-sora), system-ui, sans-serif;
+  --font-sans: var(--font-manrope), system-ui, sans-serif;
+}
+
+/* Estilos de siempre: alias de color por tema, páginas y componentes sin Tailwind. */
+@layer legacy {
+:root {
   --fondo: var(--color-white);
   --texto: var(--color-ink);
   --tenue: color-mix(in srgb, var(--color-ink) 68%, var(--color-white));
@@ -166,17 +185,34 @@ h3 {
   font-size: 0.9375rem;
 }
 
+/* El borde se queda en --tenue: un campo necesita 3:1 contra el fondo (WCAG 1.4.11). */
 .campo input,
 .campo textarea,
 .campo select,
 .tarjeta select {
   font: inherit;
   color: var(--texto);
-  background: var(--fondo);
-  border: 2px solid var(--tenue);
-  border-radius: 0.5rem;
-  padding: 0.625rem 0.75rem;
-  min-height: 2.75rem;
+  background: var(--superficie);
+  border: 1.5px solid var(--tenue);
+  border-radius: 0.75rem;
+  padding: 0.75rem 0.875rem;
+  min-height: 3rem;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.campo input:hover,
+.campo textarea:hover,
+.campo select:hover {
+  border-color: var(--texto);
+}
+
+.campo input:focus,
+.campo textarea:focus,
+.campo select:focus {
+  border-color: var(--color-indigo);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-indigo) 22%, transparent);
 }
 
 .campo input[aria-invalid="true"],
@@ -214,6 +250,34 @@ h3 {
   font-size: 0.9375rem;
 }
 
+/* Registro e ingreso (AuthShell): más compacto, para que quepa en una pantalla sin scroll, y
+   nombre y apellido lado a lado cuando hay ancho. */
+.auth-form .formulario {
+  gap: 1rem;
+}
+
+/* Un <input> tiene un ancho mínimo propio (unos 200 px): sin `width: 100%` y `min-width: 0`, y
+   con columnas `1fr` (que no bajan de ese mínimo), la grilla queda más ancha que la tarjeta. */
+.auth-form .campo input {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 40rem) {
+  .auth-form .formulario {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .auth-form .formulario > * {
+    grid-column: 1 / -1;
+  }
+
+  .auth-form .formulario > .campo:has(> input[name="first_name"]),
+  .auth-form .formulario > .campo:has(> input[name="last_name"]) {
+    grid-column: auto;
+  }
+}
+
 a {
   color: var(--acento);
 }
@@ -236,11 +300,14 @@ a {
   font-weight: 700;
   text-align: center;
   text-decoration: none;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   border: 2px solid transparent;
   padding: 0.625rem 1.25rem;
   min-height: 2.75rem;
   cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .boton:disabled {
@@ -251,6 +318,21 @@ a {
 .boton--coral {
   background: var(--color-coral);
   color: var(--color-ink);
+}
+
+.boton--coral:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--color-coral) 75%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boton {
+    transition: none;
+  }
+
+  .boton--coral:hover:not(:disabled) {
+    transform: none;
+  }
 }
 
 .boton--borde {
@@ -541,3 +623,11 @@ progress {
 textarea {
   resize: vertical;
 }
+
+/* Las anclas de la portada bajan con suavidad, salvo que la persona pida menos movimiento. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+} /* fin de @layer legacy */

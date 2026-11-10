@@ -4,9 +4,11 @@ import Home from "@/app/page";
 import { leer } from "./helpers/fuentes";
 
 describe("Home", () => {
+  // Rediseño (jb-55): el h1 pasa a ser el eslogan y el nombre va en el logo del encabezado.
   it("muestra el nombre del producto", () => {
     render(<Home />);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("JobOut");
+    expect(screen.getByRole("link", { name: "JobOut, inicio" })).toHaveTextContent("JobOut");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Llega listo a tu primera entrevista.");
   });
 
   // Hallazgo de la revisión en el navegador: la home no llevaba a ningún lado.
