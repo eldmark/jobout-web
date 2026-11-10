@@ -33,6 +33,7 @@ export default function Portada() {
         <p className="mt-7 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 font-display text-2xl font-bold text-ink sm:text-3xl dark:text-white">
           {t("home.hero.practice")}
           <TextRotate
+            anchoFijo
             texts={TIPOS.map((k) => t(k))}
             rotationInterval={2200}
             staggerDuration={0.025}

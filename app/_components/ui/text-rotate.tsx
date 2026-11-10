@@ -6,7 +6,8 @@
  *
  * Cambios respecto del original: sin API imperativa (ref) ni `onNext`, que no se usan; con
  * «reducir movimiento» no rota y se queda en el primer texto; `span` por defecto, para poder
- * ir dentro de un párrafo.
+ * ir dentro de un párrafo; y `anchoFijo`, para que una caja con fondo no cambie de tamaño
+ * con cada texto (el original anima el ancho).
  */
 
 import { useCallback, useEffect, useMemo, useState, type ElementType } from "react";
@@ -42,6 +43,12 @@ export interface TextRotateProps {
   mainClassName?: string;
   splitLevelClassName?: string;
   elementLevelClassName?: string;
+  /**
+   * Reserva el ancho del texto más largo (copias invisibles de todos los textos en la misma
+   * celda): la caja no cambia de tamaño al rotar y el renglón no se mueve. El texto nuevo entra
+   * mientras sale el anterior, sin un instante vacío.
+   */
+  anchoFijo?: boolean;
 }
 
 export default function TextRotate({
@@ -57,6 +64,7 @@ export default function TextRotate({
   mainClassName,
   splitLevelClassName,
   elementLevelClassName,
+  anchoFijo = false,
 }: TextRotateProps) {
   const reducir = useReducedMotion();
   const [indice, setIndice] = useState(0);
@@ -88,10 +96,27 @@ export default function TextRotate({
   }, [as]);
 
   return (
-    <Contenedor className={cn("inline-flex flex-wrap whitespace-pre-wrap", mainClassName)} transition={transition} layout>
+    <Contenedor
+      className={cn(anchoFijo ? "relative inline-grid justify-items-center" : "inline-flex flex-wrap", "whitespace-pre-wrap", mainClassName)}
+      transition={transition}
+      layout={!anchoFijo}
+    >
       <span className="sr-only">{texts[indice]}</span>
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.span key={indice} className="inline-flex flex-wrap" aria-hidden="true" layout>
+      {anchoFijo
+        ? texts.map((texto) => (
+            <span key={texto} data-medida="" aria-hidden="true" className="invisible col-start-1 row-start-1 whitespace-pre">
+              {texto}
+            </span>
+          ))
+        : null}
+      <AnimatePresence mode={anchoFijo ? "popLayout" : "wait"} initial={false}>
+        <motion.span
+          key={indice}
+          data-actual=""
+          className={cn("inline-flex flex-wrap", anchoFijo && "col-start-1 row-start-1 justify-center")}
+          aria-hidden="true"
+          layout={!anchoFijo}
+        >
           {palabras.map((palabra, ip) => {
             const previos = palabras.slice(0, ip).reduce((suma, p) => {
               return suma + p.caracteres.length;

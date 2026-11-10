@@ -256,9 +256,16 @@ h3 {
   gap: 1rem;
 }
 
+/* Un <input> tiene un ancho mínimo propio (unos 200 px): sin `width: 100%` y `min-width: 0`, y
+   con columnas `1fr` (que no bajan de ese mínimo), la grilla queda más ancha que la tarjeta. */
+.auth-form .campo input {
+  width: 100%;
+  min-width: 0;
+}
+
 @media (min-width: 40rem) {
   .auth-form .formulario {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 
   .auth-form .formulario > * {
