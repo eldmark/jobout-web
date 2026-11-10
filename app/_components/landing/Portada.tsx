@@ -30,16 +30,21 @@ export default function Portada() {
           {t("brand.slogan")}
         </h1>
 
-        <p className="mt-7 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 font-display text-2xl font-bold text-ink sm:text-3xl dark:text-white">
-          {t("home.hero.practice")}
+        {/* «Practica entrevistas» arriba y el tipo de entrevista debajo, sin caja: índigo en claro
+            y coral en oscuro (coral sobre blanco no da el contraste). El ancho reservado evita
+            que el texto de abajo salte al cambiar de palabra. En celular la letra crece con la
+            pantalla (7.5vw, tope de 30 px) para que «de Recursos Humanos» quepa en un renglón
+            hasta en 320 px. */}
+        <p className="mt-8 flex flex-col items-center gap-1 font-display font-bold">
+          <span className="text-xl text-ink/80 sm:text-2xl dark:text-lavender/85">{t("home.hero.practice")}</span>
           <TextRotate
             anchoFijo
             texts={TIPOS.map((k) => t(k))}
             rotationInterval={2200}
             staggerDuration={0.025}
             staggerFrom="last"
-            mainClassName="overflow-hidden rounded-xl bg-coral px-3 py-1 text-ink justify-center"
-            splitLevelClassName="overflow-hidden pb-0.5"
+            mainClassName="overflow-hidden pb-1 text-[clamp(1.375rem,7.5vw,1.875rem)] leading-[1.2] tracking-tight text-indigo sm:text-5xl dark:text-coral"
+            splitLevelClassName="overflow-hidden pb-1"
           />
         </p>
 

@@ -113,7 +113,7 @@ export default function TextRotate({
         <motion.span
           key={indice}
           data-actual=""
-          className={cn("inline-flex flex-wrap", anchoFijo && "col-start-1 row-start-1 justify-center")}
+          className={cn("inline-flex", anchoFijo ? "col-start-1 row-start-1 flex-nowrap justify-center" : "flex-wrap")}
           aria-hidden="true"
           layout={!anchoFijo}
         >
