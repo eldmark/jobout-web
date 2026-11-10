@@ -85,7 +85,26 @@ describe("TextRotate", () => {
   it("V11: el lector de pantalla lee el texto actual una vez; las letras animadas están ocultas", () => {
     const { container } = render(<TextRotate texts={nombres} />);
     expect(leido(container)).toBe("Ana");
-    expect(container.querySelector("[aria-hidden='true']")?.textContent).toBe("Ana");
+    const actual = container.querySelector("[data-actual]");
+    expect(actual).toHaveAttribute("aria-hidden", "true");
+    expect(actual?.textContent).toBe("Ana");
+  });
+
+  // Revisión de Lázaro: la pastilla cambiaba de tamaño con cada texto y movía todo el renglón.
+  it("anchoFijo: reserva el ancho del texto más largo con copias invisibles de todos los textos", () => {
+    const { container } = render(<TextRotate texts={nombres} anchoFijo />);
+    const medidas = [...container.querySelectorAll("[data-medida]")];
+    expect(medidas.map((m) => m.textContent)).toEqual(nombres);
+    for (const m of medidas) {
+      expect(m).toHaveClass("invisible");
+      expect(m).toHaveAttribute("aria-hidden", "true");
+    }
+    expect(leido(container)).toBe("Ana");
+  });
+
+  it("sin anchoFijo no agrega copias de medida", () => {
+    const { container } = render(<TextRotate texts={nombres} />);
+    expect(container.querySelectorAll("[data-medida]")).toHaveLength(0);
   });
 
   it("rota al siguiente texto en cada intervalo y vuelve al primero", () => {

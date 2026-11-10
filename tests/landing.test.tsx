@@ -58,6 +58,15 @@ describe("Portada", () => {
     for (const r of RECRUITERS) expect(frase).not.toHaveTextContent(t(`home.recruiters.${r}.name` as MessageKey));
   });
 
+  it("la pastilla del titular tiene ancho fijo: mide con todos los tipos de entrevista", () => {
+    render(<Home />);
+    const frase = screen.getByText(t("home.hero.practice"), { exact: false }).closest("p")!;
+    const medidas = [...frase.querySelectorAll("[data-medida]")].map((m) => m.textContent);
+    expect(medidas).toEqual(
+      ["technical", "hr", "behavioral", "english", "startup"].map((k) => t(`home.hero.kind.${k}` as MessageKey)),
+    );
+  });
+
   it("explica cómo funciona en tres pasos", () => {
     render(<Home />);
     const seccion = document.getElementById("como-funciona")!;
