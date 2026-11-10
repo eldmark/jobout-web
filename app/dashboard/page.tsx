@@ -26,6 +26,26 @@ async function needsProfile(access: string): Promise<boolean> {
   }
 }
 
+/** Id de la primera sesión con ese estado (el backend filtra por `status`); null ante cualquier duda. */
+async function firstWithStatus(access: string, status: "in_progress" | "paused"): Promise<string | null> {
+  try {
+    const res = await fetch(`${backendUrl()}/api/v1/interviews?status=${status}&limit=1`, { headers: { authorization: `Bearer ${access}` }, cache: "no-store" });
+    if (!res.ok) return null;
+    const pagina: { items?: unknown } | null = await res.json().catch(() => null);
+    if (!pagina || !Array.isArray(pagina.items)) return null;
+    const primera = (pagina.items as { id?: unknown }[])[0];
+    return primera && typeof primera.id === "string" ? primera.id : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Id de la entrevista en curso o, si no hay, en pausa; null si no hay ninguna o ante cualquier duda. */
+async function activeInterview(access: string): Promise<string | null> {
+  const [enCurso, enPausa] = await Promise.all([firstWithStatus(access, "in_progress"), firstWithStatus(access, "paused")]);
+  return enCurso ?? enPausa;
+}
+
 /** Las páginas del servidor no pueden escribir cookies: si el access expiró, se redirige a
  * /api/auth/refresh, que renueva y vuelve aquí (`?refreshed=1` evita un bucle). */
 export default async function Dashboard({
@@ -54,6 +74,6 @@ export default async function Dashboard({
     const data: Partial<Me> | null = await res.json().catch(() => null);
     if (data && typeof data.first_name === "string" && data.plan) me = data as Me;
   }
-  const completeProfile = me ? await needsProfile(access) : false;
-  return <DashboardView me={me} completeProfile={completeProfile} />;
+  const [completeProfile, activeInterviewId] = me ? await Promise.all([needsProfile(access), activeInterview(access)]) : [false, null];
+  return <DashboardView me={me} completeProfile={completeProfile} activeInterviewId={activeInterviewId} />;
 }

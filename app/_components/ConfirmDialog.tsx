@@ -9,14 +9,16 @@ interface Props {
   workingKey: MessageKey;
   cancelKey: MessageKey;
   working: boolean;
-  error: MessageKey | null;
+  error?: MessageKey | null;
+  /** Mensaje ya armado (con fecha o espera); tiene prioridad sobre `error`. */
+  errorText?: string | null;
   onConfirm: () => void;
   onCancel: () => void;
   children: ReactNode;
 }
 
 /** Diálogo modal accesible: rol, nombre, Escape, trampa de foco. El foco inicial va a «Cancelar». */
-export default function ConfirmDialog({ titleKey, confirmKey, workingKey, cancelKey, working, error, onConfirm, onCancel, children }: Props) {
+export default function ConfirmDialog({ titleKey, confirmKey, workingKey, cancelKey, working, error = null, errorText = null, onConfirm, onCancel, children }: Props) {
   const cancelar = useRef(null as HTMLButtonElement | null);
   const dialogo = useRef(null as HTMLDivElement | null);
 
@@ -49,9 +51,9 @@ export default function ConfirmDialog({ titleKey, confirmKey, workingKey, cancel
       <div ref={dialogo} className="dialogo" role="dialog" aria-modal="true" aria-labelledby="dlg-titulo" aria-describedby="dlg-detalle" onKeyDown={teclas}>
         <h2 id="dlg-titulo">{t(titleKey)}</h2>
         <div id="dlg-detalle">{children}</div>
-        {error ? (
+        {errorText || error ? (
           <div className="formulario__error" role="alert" aria-live="assertive">
-            {t(error)}
+            {errorText ?? (error ? t(error) : null)}
           </div>
         ) : null}
         <div className="dialogo__acciones">
