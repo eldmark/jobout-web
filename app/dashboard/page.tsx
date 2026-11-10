@@ -26,18 +26,24 @@ async function needsProfile(access: string): Promise<boolean> {
   }
 }
 
-/** Id de la entrevista en curso o en pausa; null ante cualquier duda (lista caída, forma rara). */
-async function activeInterview(access: string): Promise<string | null> {
+/** Id de la primera sesión con ese estado (el backend filtra por `status`); null ante cualquier duda. */
+async function firstWithStatus(access: string, status: "in_progress" | "paused"): Promise<string | null> {
   try {
-    const res = await fetch(`${backendUrl()}/api/v1/interviews`, { headers: { authorization: `Bearer ${access}` }, cache: "no-store" });
+    const res = await fetch(`${backendUrl()}/api/v1/interviews?status=${status}&limit=1`, { headers: { authorization: `Bearer ${access}` }, cache: "no-store" });
     if (!res.ok) return null;
-    const lista: unknown = await res.json().catch(() => null);
-    if (!Array.isArray(lista)) return null;
-    const activa = (lista as { id?: unknown; status?: unknown }[]).find((s) => (s.status === "in_progress" || s.status === "paused") && typeof s.id === "string");
-    return activa ? (activa.id as string) : null;
+    const pagina: { items?: unknown } | null = await res.json().catch(() => null);
+    if (!pagina || !Array.isArray(pagina.items)) return null;
+    const primera = (pagina.items as { id?: unknown }[])[0];
+    return primera && typeof primera.id === "string" ? primera.id : null;
   } catch {
     return null;
   }
+}
+
+/** Id de la entrevista en curso o, si no hay, en pausa; null si no hay ninguna o ante cualquier duda. */
+async function activeInterview(access: string): Promise<string | null> {
+  const [enCurso, enPausa] = await Promise.all([firstWithStatus(access, "in_progress"), firstWithStatus(access, "paused")]);
+  return enCurso ?? enPausa;
 }
 
 /** Las páginas del servidor no pueden escribir cookies: si el access expiró, se redirige a

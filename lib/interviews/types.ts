@@ -1,9 +1,10 @@
 /**
- * Contrato SIMULADO de entrevistas (Fase 3, paso 3). El backend aún no existe: estas formas
- * salen de `docs/working/fase3-entrevista.md` y se confirman en el paso 11.
+ * Contrato de entrevistas (Fase 3): `jobout-docs/documentation/api.md`, sección «Entrevista (Fase 3)».
+ * Todo listado es `{items}`; solo `GET /interviews` pagina por cursor.
  */
 export type InterviewStatus = "created" | "in_progress" | "paused" | "completed" | "abandoned";
-export type TurnSpeaker = "recruiter" | "candidate";
+/** La persona es `applicant` (enum `interview_speaker` de db.md). */
+export type TurnSpeaker = "recruiter" | "applicant";
 export type TurnKind = "question" | "follow_up" | "closing" | "answer";
 
 export interface Recruiter {
@@ -32,7 +33,8 @@ export interface Level {
 export interface Turn {
   seq: number;
   speaker: TurnSpeaker;
-  kind?: TurnKind;
+  /** Siempre presente: question | follow_up | closing del recruiter; answer de la persona. */
+  kind: TurnKind;
   text: string;
 }
 
@@ -41,6 +43,8 @@ export interface Interview {
   status: InterviewStatus;
   recruiter: { id: string; display_name: string; role_title: string };
   level: { id: string; code: string; name: string };
+  /** ISO 8601 con zona. */
+  created_at: string;
   turns: Turn[];
 }
 
@@ -49,7 +53,29 @@ export interface InterviewSummary {
   status: InterviewStatus;
   level: { id: string; code: string; name: string };
   recruiter: { id: string; display_name: string };
-  score?: number | null;
+  /** Nulo si la sesión no tiene score. */
+  score: number | null;
+  created_at: string;
+  /** Nulo si la sesión no terminó. */
+  completed_at: string | null;
+}
+
+/** Listados sin paginar: siempre `{items}`. */
+export interface ItemsResponse<T> {
+  items: T[];
+}
+
+/** `GET /interviews`: paginado por cursor opaco; `next_cursor` es null en la última página. */
+export interface InterviewPage {
+  items: InterviewSummary[];
+  next_cursor: string | null;
+}
+
+export interface ListParams {
+  /** 1–50 (defecto del backend: 20). */
+  limit?: number;
+  cursor?: string;
+  status?: InterviewStatus;
 }
 
 export interface ResumeReply {
@@ -65,7 +91,9 @@ export interface TurnReply {
 export interface CriterionScore {
   criterion: string;
   label: string;
+  /** Puntos obtenidos (no un porcentaje). */
   score: number;
+  max_points: number;
   why: string;
 }
 
@@ -83,9 +111,14 @@ export interface InterviewScore {
 export interface ProgressPoint {
   session_id: string;
   completed_at: string;
+  /** Nombre del nivel. */
   level: string;
+  /** `display_name` del recruiter. */
   recruiter: string;
   score: number;
 }
 
 export const MAX_ANSWER_CHARS = 4000;
+
+/** El límite cuenta caracteres Unicode (puntos de código), no unidades UTF-16 ni bytes. */
+export const countChars = (text: string): number => [...text].length;

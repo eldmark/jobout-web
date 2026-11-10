@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
 import { dobleClic } from "./helpers/doble";
 import { jsonRes, stubFetch, type Llamada } from "./helpers/backend";
-import { SID, SESION, RECRUITERS, LEVELS } from "./helpers/interview";
+import { SID, SESION, RECRUITERS, LEVELS, items } from "./helpers/interview";
 import { t, tf } from "@/lib/messages";
 import { goTo } from "@/lib/navigate";
 import InterviewStart from "@/app/_components/InterviewStart";
@@ -21,8 +21,8 @@ function backend(extra: (c: Llamada) => Response | undefined = () => undefined) 
   return stubFetch((c) => {
     const x = extra(c);
     if (x) return x;
-    if (c.url === "/api/recruiters") return jsonRes(200, RECRUITERS);
-    if (c.url === "/api/levels") return jsonRes(200, LEVELS);
+    if (c.url === "/api/recruiters") return jsonRes(200, items(RECRUITERS));
+    if (c.url === "/api/levels") return jsonRes(200, items(LEVELS));
     return jsonRes(404);
   });
 }
@@ -90,6 +90,16 @@ describe("F2 elegir recruiter y nivel", () => {
   });
 });
 
+describe("enlaces", () => {
+  it("lleva al progreso y a la lista de entrevistas", async () => {
+    backend();
+    render(<InterviewStart />);
+    await screen.findByRole("group", { name: t("interview.recruiter.legend") }, ESPERA);
+    expect(screen.getByRole("link", { name: t("interview.start.progressLink") })).toHaveAttribute("href", "/interviews/progress");
+    expect(screen.getByRole("link", { name: t("interview.start.sessionsLink") })).toHaveAttribute("href", "/interviews/sessions");
+  });
+});
+
 describe("F3 empezar crea la sesión una sola vez", () => {
   it("doble clic -> un solo POST y navega a la conversación", async () => {
     const { llamadas } = backend((c) => (c.method === "POST" && c.url === "/api/interviews" ? jsonRes(201, SESION()) : undefined));
@@ -106,8 +116,8 @@ describe("F3 empezar crea la sesión una sola vez", () => {
   it("mientras crea, el botón se deshabilita y dice que está trabajando", async () => {
     let soltar: (r: Response) => void = () => {};
     const { llamadas } = stubFetch((c) => {
-      if (c.url === "/api/recruiters") return jsonRes(200, RECRUITERS);
-      if (c.url === "/api/levels") return jsonRes(200, LEVELS);
+      if (c.url === "/api/recruiters") return jsonRes(200, items(RECRUITERS));
+      if (c.url === "/api/levels") return jsonRes(200, items(LEVELS));
       return new Promise<Response>((res) => (soltar = res)) as unknown as Response;
     });
     render(<InterviewStart />);
@@ -166,6 +176,7 @@ describe("F14 validación accesible y foco al primer error", () => {
 describe("F13 errores al empezar, en español y anunciados", () => {
   const casos: [number, unknown, string][] = [
     [403, { error: "nivel_bloqueado" }, "interview.error.levelLocked"],
+    [403, { error: "limite_del_plan" }, "interview.error.planLimit"],
     [409, { error: "nivel_no_disponible" }, "interview.error.levelUnavailable"],
     [422, { error: "datos_invalidos" }, "interview.error.invalid"],
     [429, { error: "demasiados_intentos" }, "interview.error.rateLimited"],
@@ -185,6 +196,25 @@ describe("F13 errores al empezar, en español y anunciados", () => {
       await vi.waitFor(() => expect(posts(llamadas)).toHaveLength(2), ESPERA);
     });
   }
+  it("403 limite_del_plan muestra la fecha de renovación en es-GT (el día UTC, no el local)", async () => {
+    process.env.TZ = "America/Guatemala";
+    backend((c) => (c.method === "POST" ? jsonRes(403, { error: "limite_del_plan", renews_at: "2026-12-01T00:00:00Z" }) : undefined));
+    render(<InterviewStart />);
+    await elegir();
+    fireEvent.click(empezar());
+    const alerta = await screen.findByRole("alert", {}, ESPERA);
+    expect(alerta).toHaveTextContent(tf("interview.error.planLimitRenews", { date: "1 de diciembre de 2026" }));
+    expect(alerta).toHaveTextContent("1 de diciembre de 2026");
+    expect(goTo).not.toHaveBeenCalled();
+    expect(empezar()).toBeEnabled();
+  });
+  it("429 con Retry-After dice cuántos segundos esperar", async () => {
+    backend((c) => (c.method === "POST" ? new Response(JSON.stringify({ error: "demasiados_intentos" }), { status: 429, headers: { "retry-after": "12" } }) : undefined));
+    render(<InterviewStart />);
+    await elegir();
+    fireEvent.click(empezar());
+    expect(await screen.findByRole("alert", {}, ESPERA)).toHaveTextContent(tf("interview.error.rateLimitedIn", { n: 12 }));
+  });
   it("409 sesion_en_curso ofrece «Retoma tu entrevista» hacia esa sesión", async () => {
     backend((c) => (c.method === "POST" ? jsonRes(409, { error: "sesion_en_curso", session_id: SID }) : undefined));
     render(<InterviewStart />);

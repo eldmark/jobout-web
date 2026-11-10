@@ -31,8 +31,9 @@ interface Opciones {
    * reenvían tal cual; un texto = se informa siempre ese código, sin mirar el cuerpo.
    */
   errors?: Record<number, readonly string[] | string>;
-  /** Campos UUID del cuerpo de error que se conservan (p. ej. `session_id`). Lo demás se descarta. */
-  echo?: readonly string[];
+  /** Campos de texto del cuerpo de error que se conservan, cada uno con el formato que debe cumplir
+   * (p. ej. `session_id` UUID, `renews_at` fecha ISO). Lo que no cumple o no está listado se descarta. */
+  echo?: Record<string, RegExp>;
 }
 
 export async function forward(request: Request, o: Opciones): Promise<Response> {
@@ -74,6 +75,10 @@ export async function forward(request: Request, o: Opciones): Promise<Response> 
     return new Response(res.body, { status: 200, headers: h });
   }
 
+  // Retry-After solo como segundos enteros: es lo único que el contrato promete y lo único que se reenvía.
+  const espera = res.headers.get("retry-after");
+  if (res.status === 429 && espera && /^\d{1,6}$/.test(espera)) h.set("retry-after", espera);
+
   const permitido = o.errors?.[res.status] ?? CODIGOS_POR_ESTADO[res.status];
   if (typeof permitido === "string" && o.errors) return errorJson(res.status, permitido, h);
   if (permitido) {
@@ -82,9 +87,9 @@ export async function forward(request: Request, o: Opciones): Promise<Response> 
     const codigo = data?.error;
     if (typeof codigo === "string" && lista.includes(codigo)) {
       const extra: Record<string, string> = {};
-      for (const campo of o.echo ?? []) {
+      for (const [campo, formato] of Object.entries(o.echo ?? {})) {
         const v = data?.[campo];
-        if (typeof v === "string" && UUID_RE.test(v)) extra[campo] = v;
+        if (typeof v === "string" && formato.test(v)) extra[campo] = v;
       }
       if (Object.keys(extra).length === 0) return errorJson(res.status, codigo, h);
       h.set("content-type", "application/json");

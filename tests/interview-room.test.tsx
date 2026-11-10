@@ -1,9 +1,9 @@
 /** F3 (primera pregunta), F4–F8, F13 y F14 en la conversación. */
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, within, waitFor } from "@testing-library/react";
 import { dobleClic } from "./helpers/doble";
 import { jsonRes, stubFetch, type Llamada } from "./helpers/backend";
-import { SID, SESION, SCORE, T1 } from "./helpers/interview";
+import { SID, SESION, SCORE, T1, RESP } from "./helpers/interview";
 import { t, tf } from "@/lib/messages";
 import InterviewRoom from "@/app/_components/InterviewRoom";
 
@@ -77,7 +77,7 @@ describe("F3/F4 la conversación", () => {
   it("muestra la primera pregunta y los turnos en orden por seq", async () => {
     await abrir(undefined, SESION({
       turns: [
-        { seq: 2, speaker: "candidate", kind: "answer", text: "Hice una API" },
+        RESP(2, "Hice una API"),
         T1,
         { seq: 3, speaker: "recruiter", kind: "follow_up", text: "¿Con qué resultado?" },
       ],
@@ -125,14 +125,14 @@ describe("F5 enviar", () => {
     );
     escribir("  Hice una API de pagos  ");
     fireEvent.click(enviarBtn());
-    await vi.waitFor(() => expect(campo()).toBeDisabled(), ESPERA);
+    await waitFor(() => expect(campo()).toBeDisabled(), ESPERA);
     expect(campo()).toHaveValue("");
     expect(screen.getByRole("button", { name: t("interview.room.sending") })).toBeDisabled();
     expect(screen.getByRole("status")).toHaveTextContent(tf("interview.room.status.thinking", { name: "Ana" }));
     expect(llamadasA(llamadas, "/turns")).toHaveLength(1);
     expect(llamadasA(llamadas, "/turns")[0].body).toEqual({ text: "Hice una API de pagos" });
     soltar(jsonRes(201, RESPUESTA));
-    await vi.waitFor(() => expect(campo()).toBeEnabled(), ESPERA);
+    await waitFor(() => expect(campo()).toBeEnabled(), ESPERA);
     expect(campo()).toHaveFocus();
     expect(screen.queryByText(tf("interview.room.status.thinking", { name: "Ana" }))).toBeNull();
   });
@@ -142,11 +142,11 @@ describe("F5 enviar", () => {
     fireEvent.keyDown(campo(), { key: "Enter" });
     expect(llamadasA(llamadas, "/turns")).toHaveLength(0);
     fireEvent.keyDown(campo(), { key: "Enter", ctrlKey: true });
-    await vi.waitFor(() => expect(llamadasA(llamadas, "/turns")).toHaveLength(1), ESPERA);
-    await vi.waitFor(() => expect(campo()).toBeEnabled(), ESPERA);
+    await waitFor(() => expect(llamadasA(llamadas, "/turns")).toHaveLength(1), ESPERA);
+    await waitFor(() => expect(campo()).toBeEnabled(), ESPERA);
     escribir("Segunda");
     fireEvent.keyDown(campo(), { key: "Enter", metaKey: true });
-    await vi.waitFor(() => expect(llamadasA(llamadas, "/turns")).toHaveLength(2), ESPERA);
+    await waitFor(() => expect(llamadasA(llamadas, "/turns")).toHaveLength(2), ESPERA);
   });
   it("doble envío rápido -> una sola llamada", async () => {
     const { llamadas } = await abrir((c) => (c.method === "POST" && c.url.endsWith("/turns") ? jsonRes(201, RESPUESTA) : undefined));
@@ -154,14 +154,14 @@ describe("F5 enviar", () => {
     const b = enviarBtn();
     dobleClic(b);
     fireEvent.keyDown(campo(), { key: "Enter", ctrlKey: true });
-    await vi.waitFor(() => expect(campo()).toBeEnabled(), ESPERA);
+    await waitFor(() => expect(campo()).toBeEnabled(), ESPERA);
     expect(llamadasA(llamadas, "/turns")).toHaveLength(1);
   });
   it("tu respuesta aparece en la transcripción y la del recruiter después", async () => {
     await abrir((c) => (c.method === "POST" && c.url.endsWith("/turns") ? jsonRes(201, RESPUESTA) : undefined));
     escribir("Mi historia");
     fireEvent.click(enviarBtn());
-    await vi.waitFor(() => expect(campo()).toBeEnabled(), ESPERA);
+    await waitFor(() => expect(campo()).toBeEnabled(), ESPERA);
     const items = within(screen.getByRole("list", { name: t("interview.room.transcript") })).getAllByRole("listitem");
     expect(items.map((i) => i.textContent)).toEqual([
       expect.stringContaining(T1.text),
@@ -192,13 +192,34 @@ describe("F6 respuesta vacía", () => {
     expect(screen.queryByText(t("interview.room.validation.empty"))).toBeNull();
     expect(campo()).not.toHaveAttribute("aria-invalid");
   });
-  it("el campo limita a 4000 caracteres y un texto más largo no se envía", async () => {
+  it("un texto de más de 4000 caracteres no se envía y se explica", async () => {
     const { llamadas } = await abrir();
-    expect(campo()).toHaveAttribute("maxlength", "4000");
     escribir("a".repeat(4001));
     fireEvent.click(enviarBtn());
     expect(llamadasA(llamadas, "/turns")).toHaveLength(0);
     expect(screen.getByText(t("interview.room.validation.tooLong"))).toBeInTheDocument();
+    expect(campo()).toHaveFocus();
+  });
+  it("el límite cuenta caracteres Unicode: 4000 emojis (8000 unidades UTF-16) sí se envían; 4001 no", async () => {
+    const { llamadas } = await abrir((c) => (c.method === "POST" && c.url.endsWith("/turns") ? jsonRes(201, RESPUESTA) : undefined));
+    expect(campo()).not.toHaveAttribute("maxlength"); // maxlength cuenta UTF-16 y rechazaría texto válido
+    escribir("😀".repeat(4001));
+    fireEvent.click(enviarBtn());
+    expect(llamadasA(llamadas, "/turns")).toHaveLength(0);
+    expect(screen.getByText(t("interview.room.validation.tooLong"))).toBeInTheDocument();
+    escribir("😀".repeat(4000));
+    fireEvent.click(enviarBtn());
+    await waitFor(() => expect(llamadasA(llamadas, "/turns")).toHaveLength(1), ESPERA);
+    expect((llamadasA(llamadas, "/turns")[0].body as { text: string }).text).toBe("😀".repeat(4000));
+    await waitFor(() => expect(campo()).toBeEnabled(), ESPERA);
+  });
+  it("el recorte va antes de contar: 4000 caracteres rodeados de espacios sí se envían", async () => {
+    const { llamadas } = await abrir((c) => (c.method === "POST" && c.url.endsWith("/turns") ? jsonRes(201, RESPUESTA) : undefined));
+    escribir(`   ${"a".repeat(4000)}  \n`);
+    fireEvent.click(enviarBtn());
+    await waitFor(() => expect(llamadasA(llamadas, "/turns")).toHaveLength(1), ESPERA);
+    expect((llamadasA(llamadas, "/turns")[0].body as { text: string }).text).toBe("a".repeat(4000));
+    await waitFor(() => expect(campo()).toBeEnabled(), ESPERA);
   });
 });
 
@@ -236,7 +257,7 @@ describe("F7 fallos y reintento sin perder lo escrito", () => {
     escribir("Borrador mejorado");
     falla = false;
     fireEvent.click(screen.getByRole("button", { name: t("interview.room.retrySend") }));
-    await vi.waitFor(() => expect(llamadasA(llamadas, "/turns")).toHaveLength(2), ESPERA);
+    await waitFor(() => expect(llamadasA(llamadas, "/turns")).toHaveLength(2), ESPERA);
     expect((llamadasA(llamadas, "/turns")[1].body as { text: string }).text).toBe("Borrador mejorado");
   });
   it("tu mensaje fallido no queda en la transcripción", async () => {
@@ -263,6 +284,13 @@ describe("F7 fallos y reintento sin perder lo escrito", () => {
       expect(campo()).toHaveValue("Texto que no debe perderse");
     });
   }
+  it("429 con Retry-After dice cuántos segundos esperar y el texto no se pierde", async () => {
+    await abrir((c) => (c.method === "POST" && c.url.endsWith("/turns") ? new Response(JSON.stringify({ error: "demasiados_intentos" }), { status: 429, headers: { "retry-after": "9" } }) : undefined));
+    escribir("Mi texto");
+    fireEvent.click(enviarBtn());
+    expect(await screen.findByText(tf("interview.error.rateLimitedIn", { n: 9 }), {}, ESPERA)).toBeInTheDocument();
+    expect(campo()).toHaveValue("Mi texto");
+  });
   it("fallo de red -> mensaje genérico y el texto se conserva", async () => {
     await abrir((c) => {
       if (c.method === "POST") throw new Error("offline");
@@ -276,17 +304,42 @@ describe("F7 fallos y reintento sin perder lo escrito", () => {
 });
 
 describe("cierre automático (done)", () => {
-  it("cuando el motor dice done, se muestra el resultado con el score", async () => {
-    const { llamadas } = await abrir((c) =>
-      c.method === "POST" && c.url.endsWith("/turns")
-        ? jsonRes(201, { turn: { seq: 9, speaker: "recruiter", kind: "closing", text: "Gracias, terminamos." }, done: true })
-        : undefined,
-    );
+  const CIERRE = { turn: { seq: 9, speaker: "recruiter", kind: "closing", text: "Gracias, terminamos." }, done: true };
+  it("done:true = la sesión ya está completada: el cliente pide el score con GET .../score (la respuesta no lo trae)", async () => {
+    const { llamadas } = await abrir((c) => {
+      if (c.method === "POST" && c.url.endsWith("/turns")) return jsonRes(201, CIERRE);
+      if (c.method === "GET" && c.url.endsWith("/score")) return jsonRes(200, SCORE({ score: 91 }));
+    });
     escribir("Última");
     fireEvent.click(enviarBtn());
     expect(await screen.findByRole("heading", { name: t("interview.result.title") }, ESPERA)).toBeInTheDocument();
-    expect(llamadas.some((c) => c.method === "GET" && c.url.endsWith("/score"))).toBe(true);
+    await waitFor(() => expect(screen.getByText(t("interview.result.score")).closest("div")).toHaveTextContent("91"), ESPERA);
+    const orden = llamadas.map((c) => `${c.method} ${c.url.replace(`/api/interviews/${SID}`, "")}`);
+    expect(orden.filter((o) => o === "GET /score")).toHaveLength(1);
+    expect(orden.indexOf("GET /score")).toBeGreaterThan(orden.indexOf("POST /turns"));
+    expect(orden.some((o) => o.endsWith("/finish"))).toBe(false); // ya está completada: no se llama a finish
     expect(screen.queryByRole("textbox")).toBeNull();
+  });
+  it("done:false sigue la conversación y no pide el score", async () => {
+    const { llamadas } = await abrir((c) => (c.method === "POST" && c.url.endsWith("/turns") ? jsonRes(201, RESPUESTA) : undefined));
+    escribir("Una");
+    fireEvent.click(enviarBtn());
+    await waitFor(() => expect(campo()).toBeEnabled(), ESPERA);
+    expect(llamadas.some((c) => c.url.endsWith("/score"))).toBe(false);
+    expect(screen.queryByRole("heading", { name: t("interview.result.title") })).toBeNull();
+  });
+  it("si el GET del score falla tras done, se ofrece reintentar sin perder la sesión cerrada", async () => {
+    let falla = true;
+    await abrir((c) => {
+      if (c.method === "POST" && c.url.endsWith("/turns")) return jsonRes(201, CIERRE);
+      if (c.method === "GET" && c.url.endsWith("/score")) return falla ? jsonRes(502, { error: "servicio_no_disponible" }) : jsonRes(200, SCORE());
+    });
+    escribir("Última");
+    fireEvent.click(enviarBtn());
+    expect(await screen.findByText(t("interview.result.loadError"), {}, ESPERA)).toBeInTheDocument();
+    falla = false;
+    fireEvent.click(screen.getByRole("button", { name: t("interview.result.retry") }));
+    expect(await screen.findByRole("heading", { name: t("interview.result.title") }, ESPERA)).toBeInTheDocument();
   });
 });
 
@@ -348,11 +401,40 @@ describe("F8 pausar, retomar, abandonar y terminar", () => {
     await screen.findByRole("textbox", {}, ESPERA);
     expect(llamadasA(llamadas, "/resume")).toHaveLength(1);
   });
-  it("Retomar con un error (409) lo explica en español", async () => {
-    backend((c) => (c.method === "POST" ? jsonRes(409, { error: "estado_invalido" }) : undefined), SESION({ status: "paused" }));
+  it("Retomar con un error de otro tipo (503) lo explica en español", async () => {
+    backend((c) => (c.method === "POST" ? jsonRes(503, { error: "motor_no_disponible" }) : undefined), SESION({ status: "paused" }));
     render(<InterviewRoom id={SID} />);
     fireEvent.click(await screen.findByRole("button", { name: t("interview.room.resume") }, ESPERA));
-    expect(await screen.findByText(t("interview.error.state"), {}, ESPERA)).toBeInTheDocument();
+    expect(await screen.findByText(t("interview.error.engineDown"), {}, ESPERA)).toBeInTheDocument();
+  });
+  it("Retomar sobre una sesión que ya estaba en curso (409 estado_invalido) recarga con GET y sigue la conversación", async () => {
+    let enCurso = false;
+    const { llamadas } = backend((c) => {
+      if (c.method === "POST" && c.url.endsWith("/resume")) {
+        enCurso = true; // otra pestaña ya la había retomado
+        return jsonRes(409, { error: "estado_invalido" });
+      }
+      if (enCurso && c.method === "GET" && c.url === `/api/interviews/${SID}`) return jsonRes(200, SESION());
+    }, SESION({ status: "paused" }));
+    render(<InterviewRoom id={SID} />);
+    fireEvent.click(await screen.findByRole("button", { name: t("interview.room.resume") }, ESPERA));
+    expect(await screen.findByRole("textbox", { name: t("interview.room.answerLabel") }, ESPERA)).toBeInTheDocument();
+    expect(screen.queryByText(t("interview.error.state"))).toBeNull();
+    expect(llamadas.filter((c) => c.method === "GET" && c.url === `/api/interviews/${SID}`)).toHaveLength(2);
+    expect(llamadasA(llamadas, "/resume")).toHaveLength(1);
+  });
+  it("si tras el 409 la recarga la muestra abandonada, se ve su aviso (nada de error confuso)", async () => {
+    let estado = "paused";
+    backend((c) => {
+      if (c.method === "POST" && c.url.endsWith("/resume")) {
+        estado = "abandoned";
+        return jsonRes(409, { error: "estado_invalido" });
+      }
+      if (c.method === "GET" && c.url === `/api/interviews/${SID}`) return jsonRes(200, SESION({ status: estado }));
+    });
+    render(<InterviewRoom id={SID} />);
+    fireEvent.click(await screen.findByRole("button", { name: t("interview.room.resume") }, ESPERA));
+    expect(await screen.findByRole("heading", { name: t("interview.abandoned.title") }, ESPERA)).toBeInTheDocument();
   });
   it("Abandonar: el primer clic NO llama a la API; Cancelar tampoco; confirmar llama una vez", async () => {
     const { llamadas } = await abrir((c) => (c.method === "POST" && c.url.endsWith("/abandon") ? jsonRes(204) : undefined));
@@ -386,6 +468,16 @@ describe("F8 pausar, retomar, abandonar y terminar", () => {
     dobleClic(ok);
     expect(await screen.findByRole("heading", { name: t("interview.result.title") }, ESPERA)).toBeInTheDocument();
     expect(llamadasA(llamadas, "/finish")).toHaveLength(1);
+    // finish ya devuelve el cuerpo Score (200): no hace falta pedirlo otra vez
+    expect(llamadas.some((c) => c.method === "GET" && c.url.endsWith("/score"))).toBe(false);
+    expect(screen.getByText(t("interview.result.score")).closest("div")).toHaveTextContent("78");
+  });
+  it("finish con un 409 estado_invalido lo explica y no muestra resultado", async () => {
+    await abrir((c) => (c.method === "POST" && c.url.endsWith("/finish") ? jsonRes(409, { error: "estado_invalido" }) : undefined));
+    fireEvent.click(screen.getByRole("button", { name: t("interview.room.finish") }));
+    fireEvent.click(screen.getByRole("button", { name: t("interview.finish.confirm") }));
+    expect(await within(screen.getByRole("dialog")).findByText(t("interview.error.state"), {}, ESPERA)).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: t("interview.result.title") })).toBeNull();
   });
   it("Terminar con menos de 2 respuestas (422) lo explica y la sesión sigue abierta", async () => {
     await abrir((c) => (c.method === "POST" && c.url.endsWith("/finish") ? jsonRes(422, { error: "entrevista_muy_corta" }) : undefined));

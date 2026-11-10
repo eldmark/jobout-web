@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import ConfirmDialog from "./ConfirmDialog";
 import InterviewResult, { DeleteSession, SessionDeleted } from "./InterviewResult";
-import { interviewErrorKey, isRetryable } from "@/lib/interviews/errors";
+import { interviewErrorText, isRetryable } from "@/lib/interviews/errors";
 import { interviewsApi, isOk } from "@/lib/interviews/client";
-import { MAX_ANSWER_CHARS, type Interview, type InterviewScore, type InterviewStatus, type Turn } from "@/lib/interviews/types";
+import { countChars, MAX_ANSWER_CHARS, type Interview, type InterviewScore, type InterviewStatus, type Turn } from "@/lib/interviews/types";
 import { t, tf, type MessageKey } from "@/lib/messages";
 
 type Dialogo = "pause" | "abandon" | "finish";
@@ -49,11 +49,11 @@ export default function InterviewRoom({ id }: { id: string }) {
   const [esperando, setEsperando] = useState(false);
   const [pendiente, setPendiente] = useState(null as string | null);
   const [validacion, setValidacion] = useState(null as MessageKey | null);
-  const [errorEnvio, setErrorEnvio] = useState(null as { key: MessageKey; retry: boolean } | null);
-  const [errorAccion, setErrorAccion] = useState(null as MessageKey | null);
+  const [errorEnvio, setErrorEnvio] = useState(null as { text: string; retry: boolean } | null);
+  const [errorAccion, setErrorAccion] = useState(null as string | null);
   const [dialogo, setDialogo] = useState(null as Dialogo | null);
   const [trabajando, setTrabajando] = useState(false);
-  const [errorDialogo, setErrorDialogo] = useState(null as MessageKey | null);
+  const [errorDialogo, setErrorDialogo] = useState(null as string | null);
   const [retomando, setRetomando] = useState(false);
   const [resultado, setResultado] = useState(undefined as InterviewScore | undefined);
   const [borrada, setBorrada] = useState(false);
@@ -98,7 +98,8 @@ export default function InterviewRoom({ id }: { id: string }) {
       campo.current?.focus();
       return;
     }
-    if (texto.length > MAX_ANSWER_CHARS) {
+    // El contrato recorta y cuenta caracteres Unicode: `.length` contaría unidades UTF-16 y rechazaría texto válido.
+    if (countChars(texto.trim()) > MAX_ANSWER_CHARS) {
       setValidacion("interview.room.validation.tooLong");
       campo.current?.focus();
       return;
@@ -115,12 +116,12 @@ export default function InterviewRoom({ id }: { id: string }) {
     enfocar.current = true;
     if (r.data) {
       const { turn, done } = r.data;
-      setTurnos((ts) => [...ts, { seq: turn.seq - 1, speaker: "candidate" as const, kind: "answer" as const, text: texto.trim() }, turn].sort(porSeq));
+      setTurnos((ts) => [...ts, { seq: turn.seq - 1, speaker: "applicant" as const, kind: "answer" as const, text: texto.trim() }, turn].sort(porSeq));
       if (done) setStatus("completed");
       return;
     }
     setRespuesta(texto); // nada se pierde: el texto vuelve al campo
-    if (r.status !== 401) setErrorEnvio({ key: interviewErrorKey(r.status, r.error), retry: isRetryable(r.status, r.error) });
+    if (r.status !== 401) setErrorEnvio({ text: interviewErrorText(r), retry: isRetryable(r.status, r.error) });
   }
 
   function alEnviar(ev: FormEvent) {
@@ -166,7 +167,7 @@ export default function InterviewRoom({ id }: { id: string }) {
         setStatus("completed");
       }
     } else if (r.status !== 401) {
-      setErrorDialogo(interviewErrorKey(r.status, r.error));
+      setErrorDialogo(interviewErrorText(r));
     }
   }
 
@@ -177,7 +178,9 @@ export default function InterviewRoom({ id }: { id: string }) {
     setErrorAccion(null);
     const r = await interviewsApi.resume(id);
     if (isOk(r.status)) await cargar();
-    else if (r.status !== 401) setErrorAccion(interviewErrorKey(r.status, r.error));
+    // 409 estado_invalido: la sesión ya no estaba en pausa (p. ej. otra pestaña la retomó). Se recarga por GET.
+    else if (r.status === 409 && r.error === "estado_invalido") await cargar();
+    else if (r.status !== 401) setErrorAccion(interviewErrorText(r));
     enRetomar.current = false;
     setRetomando(false);
   }
@@ -249,7 +252,7 @@ export default function InterviewRoom({ id }: { id: string }) {
       </p>
 
       <div className="formulario__error" role="alert" aria-live="assertive">
-        {errorAccion ? t(errorAccion) : errorEnvio ? t(errorEnvio.key) : null}
+        {errorAccion ?? errorEnvio?.text ?? null}
       </div>
 
       {pausada ? (
@@ -278,7 +281,7 @@ export default function InterviewRoom({ id }: { id: string }) {
               </li>
             ))}
             {pendiente ? (
-              <li className="mensaje mensaje--pendiente" data-autor="candidate">
+              <li className="mensaje mensaje--pendiente" data-autor="applicant">
                 <strong>{t("interview.room.you")}</strong>
                 <p>{pendiente}</p>
               </li>
@@ -292,7 +295,6 @@ export default function InterviewRoom({ id }: { id: string }) {
                 id="resp"
                 ref={campo}
                 rows={5}
-                maxLength={MAX_ANSWER_CHARS}
                 value={respuesta}
                 disabled={esperando}
                 aria-invalid={validacion ? true : undefined}
@@ -339,7 +341,7 @@ export default function InterviewRoom({ id }: { id: string }) {
       )}
 
       {dialogo && textos ? (
-        <ConfirmDialog titleKey={textos.titulo} confirmKey={textos.confirm} workingKey={textos.working} cancelKey={textos.cancel} working={trabajando} error={errorDialogo} onConfirm={() => void confirmar()} onCancel={cerrarDialogo}>
+        <ConfirmDialog titleKey={textos.titulo} confirmKey={textos.confirm} workingKey={textos.working} cancelKey={textos.cancel} working={trabajando} errorText={errorDialogo} onConfirm={() => void confirmar()} onCancel={cerrarDialogo}>
           <DialogoDetalle tipo={dialogo} borrador={respuesta.trim() !== ""} />
         </ConfirmDialog>
       ) : null}

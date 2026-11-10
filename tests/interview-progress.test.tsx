@@ -2,8 +2,9 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
 import { jsonRes, stubFetch } from "./helpers/backend";
-import { LEVELS, PROGRESO } from "./helpers/interview";
+import { LEVELS, PROGRESO, items } from "./helpers/interview";
 import { t, tf } from "@/lib/messages";
+import { formatDate } from "@/lib/interviews/format";
 import ProgressView from "@/app/_components/ProgressView";
 
 vi.mock("@/lib/navigate", () => ({ goTo: vi.fn() }));
@@ -17,8 +18,8 @@ afterEach(() => {
 
 function backend(levels: unknown = LEVELS, progreso: unknown = PROGRESO) {
   return stubFetch((c) => {
-    if (c.url === "/api/levels") return typeof levels === "number" ? jsonRes(levels) : jsonRes(200, levels);
-    if (c.url === "/api/progress") return typeof progreso === "number" ? jsonRes(progreso) : jsonRes(200, progreso);
+    if (c.url === "/api/levels") return typeof levels === "number" ? jsonRes(levels) : jsonRes(200, items(levels as unknown[]));
+    if (c.url === "/api/progress") return typeof progreso === "number" ? jsonRes(progreso) : jsonRes(200, items(progreso as unknown[]));
     return jsonRes(404);
   });
 }
@@ -78,6 +79,13 @@ describe("F11 la evolución", () => {
     render(<ProgressView />);
     expect(await screen.findByText(t("progress.evolution.same"), {}, ESPERA)).toBeInTheDocument();
   });
+  it("las fechas salen en es-GT", async () => {
+    backend(LEVELS, PROGRESO);
+    render(<ProgressView />);
+    const tabla = await screen.findByRole("table", { name: t("progress.evolution") }, ESPERA);
+    expect(within(tabla).getAllByRole("row")[1]).toHaveTextContent(formatDate("2026-11-01T10:00:00Z"));
+    expect(formatDate("2026-11-01T10:00:00Z")).toMatch(/2026/);
+  });
   it("con una sola sesión no hay comparación", async () => {
     backend(LEVELS, [PROGRESO[0]]);
     render(<ProgressView />);
@@ -97,7 +105,7 @@ describe("estados de error", () => {
     let falla = true;
     stubFetch((c) => {
       if (falla && c.url === "/api/progress") return jsonRes(502, { error: "servicio_no_disponible" });
-      return c.url === "/api/levels" ? jsonRes(200, LEVELS) : jsonRes(200, PROGRESO);
+      return c.url === "/api/levels" ? jsonRes(200, items(LEVELS)) : jsonRes(200, items(PROGRESO));
     });
     render(<ProgressView />);
     expect(await screen.findByRole("alert", {}, ESPERA)).toHaveTextContent(t("progress.loadError"));

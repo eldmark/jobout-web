@@ -3,16 +3,16 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ConfirmDialog from "./ConfirmDialog";
-import { interviewErrorKey } from "@/lib/interviews/errors";
+import { interviewErrorText } from "@/lib/interviews/errors";
 import { interviewsApi } from "@/lib/interviews/client";
 import type { InterviewScore } from "@/lib/interviews/types";
-import { t, type MessageKey } from "@/lib/messages";
+import { t, tf } from "@/lib/messages";
 
 /** Borrar la sesión: confirmación que dice qué se pierde y que el progreso acumulado no cambia. */
 export function DeleteSession({ id, onDeleted }: { id: string; onDeleted: () => void }) {
   const [abierto, setAbierto] = useState(false);
   const [borrando, setBorrando] = useState(false);
-  const [error, setError] = useState(null as MessageKey | null);
+  const [error, setError] = useState(null as string | null);
   const enVuelo = useRef(false);
   const disparador = useRef(null as HTMLButtonElement | null);
 
@@ -32,7 +32,7 @@ export function DeleteSession({ id, onDeleted }: { id: string; onDeleted: () => 
     enVuelo.current = false;
     setBorrando(false);
     if (r.status === 204 || r.status === 404) onDeleted();
-    else if (r.status !== 401) setError(interviewErrorKey(r.status, r.error));
+    else if (r.status !== 401) setError(interviewErrorText(r));
   }
 
   return (
@@ -47,7 +47,7 @@ export function DeleteSession({ id, onDeleted }: { id: string; onDeleted: () => 
           workingKey="interview.delete.working"
           cancelKey="interview.delete.cancel"
           working={borrando}
-          error={error}
+          errorText={error}
           onConfirm={() => void borrar()}
           onCancel={cerrar}
         >
@@ -151,7 +151,7 @@ export default function InterviewResult({ id, initial }: { id: string; initial?:
           {score.breakdown.map((c) => (
             <li key={c.criterion} className="tarjeta">
               <p>
-                <strong>{c.label}</strong> <span className="dato__cifra">{c.score}</span> {t("interview.result.outOf")}
+                <strong>{c.label}</strong> <span className="dato__cifra">{tf("interview.result.points", { score: c.score, max: c.max_points })}</span>
               </p>
               <p className="campo__ayuda">
                 <strong>{t("interview.result.why")}:</strong> {c.why}
@@ -176,6 +176,9 @@ export default function InterviewResult({ id, initial }: { id: string; initial?:
       <div className="acciones">
         <Link className="boton boton--coral" href="/interviews">
           {t("interview.result.practiceAgain")}
+        </Link>
+        <Link className="boton boton--borde" href={`/interviews/${id}/transcript`}>
+          {t("interview.result.transcriptLink")}
         </Link>
         <Link className="boton boton--borde" href="/interviews/progress">
           {t("interview.result.progressLink")}

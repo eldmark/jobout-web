@@ -1,12 +1,14 @@
 /** Cliente tipado del contrato simulado + F13 (errores en español, sin texto técnico). */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { jsonRes, stubFetch } from "./helpers/backend";
-import { SID, SESION, SCORE, REC_ID, LVL_ID } from "./helpers/interview";
+import { SID, SESION, SCORE, REC_ID, LVL_ID, RECRUITERS, RESUMEN, items, pagina } from "./helpers/interview";
 import { t, tf } from "@/lib/messages";
 import { es } from "@/lib/messages/es";
 import { goTo } from "@/lib/navigate";
 import { interviewsApi } from "@/lib/interviews/client";
-import { interviewErrorKey } from "@/lib/interviews/errors";
+import { interviewErrorKey, interviewErrorText } from "@/lib/interviews/errors";
+import { formatDate, formatRenewal } from "@/lib/interviews/format";
+import { countChars } from "@/lib/interviews/types";
 
 vi.mock("@/lib/navigate", () => ({ goTo: vi.fn() }));
 afterEach(() => {
@@ -56,6 +58,19 @@ describe("interviewsApi: una función por endpoint", () => {
     const r = await interviewsApi.create(REC_ID, LVL_ID);
     expect(r).toMatchObject({ status: 409, error: "sesion_en_curso", sessionId: SID });
   });
+  it("conserva renews_at en un 403 limite_del_plan", async () => {
+    stubFetch(() => jsonRes(403, { error: "limite_del_plan", renews_at: "2026-12-01T00:00:00Z" }));
+    const r = await interviewsApi.create(REC_ID, LVL_ID);
+    expect(r).toMatchObject({ status: 403, error: "limite_del_plan", renewsAt: "2026-12-01T00:00:00Z" });
+  });
+  it("lee Retry-After (segundos) de un 429; si no es un número lo ignora", async () => {
+    stubFetch(() => new Response(JSON.stringify({ error: "demasiados_intentos" }), { status: 429, headers: { "content-type": "application/json", "retry-after": "17" } }));
+    expect(await interviewsApi.sendTurn(SID, "hola")).toMatchObject({ status: 429, retryAfter: 17 });
+    stubFetch(() => new Response(JSON.stringify({ error: "demasiados_intentos" }), { status: 429, headers: { "retry-after": "mañana" } }));
+    expect((await interviewsApi.sendTurn(SID, "hola")).retryAfter).toBeNull();
+    stubFetch(() => jsonRes(429, { error: "demasiados_intentos" }));
+    expect((await interviewsApi.sendTurn(SID, "hola")).retryAfter).toBeNull();
+  });
   it("un fallo de red es status 0", async () => {
     stubFetch(() => {
       throw new Error("offline");
@@ -69,10 +84,71 @@ describe("interviewsApi: una función por endpoint", () => {
   });
 });
 
+describe("listados: siempre {items}; solo /interviews pagina por cursor", () => {
+  it("recruiters, levels y progress devuelven {items}", async () => {
+    stubFetch(() => jsonRes(200, items(RECRUITERS)));
+    const r = await interviewsApi.recruiters();
+    expect(r.data?.items).toHaveLength(2);
+  });
+  it("list sin parámetros -> GET /api/interviews", async () => {
+    const { llamadas } = stubFetch(() => jsonRes(200, pagina([RESUMEN()], "sig")));
+    const r = await interviewsApi.list();
+    expect(llamadas[0].url).toBe("/api/interviews");
+    expect(r.data).toEqual(pagina([RESUMEN()], "sig"));
+  });
+  it("list con limit, cursor y status los envía codificados", async () => {
+    const { llamadas } = stubFetch(() => jsonRes(200, pagina([])));
+    await interviewsApi.list({ limit: 20, cursor: "a+b/c=", status: "completed" });
+    expect(llamadas[0].url).toBe("/api/interviews?limit=20&cursor=a%2Bb%2Fc%3D&status=completed");
+    await interviewsApi.list({ status: "in_progress" });
+    expect(llamadas[1].url).toBe("/api/interviews?status=in_progress");
+  });
+});
+
+describe("el límite de 4000 cuenta caracteres Unicode, no unidades UTF-16", () => {
+  it("countChars cuenta puntos de código", () => {
+    expect(countChars("abc")).toBe(3);
+    expect(countChars("😀".repeat(10))).toBe(10);
+    expect("😀".repeat(10).length).toBe(20);
+    expect(countChars("ñ")).toBe(1);
+  });
+});
+
+describe("fechas en es-GT", () => {
+  it("la renovación es una fecha UTC, sin correrse al día anterior por la zona horaria local", () => {
+    process.env.TZ = "America/Guatemala";
+    expect(formatRenewal("2026-12-01T00:00:00Z")).toBe("1 de diciembre de 2026");
+    expect(formatRenewal("2027-01-01T00:00:00Z")).toBe("1 de enero de 2027");
+  });
+  it("una fecha inválida no produce texto roto", () => {
+    expect(formatRenewal("no es fecha")).toBeNull();
+    expect(formatDate("no es fecha")).toBe("");
+  });
+});
+
+describe("interviewErrorText: mensaje final con fecha de renovación y espera", () => {
+  it("limite_del_plan con renews_at muestra la fecha; sin ella, el mensaje sin fecha", () => {
+    process.env.TZ = "America/Guatemala";
+    const con = interviewErrorText({ status: 403, error: "limite_del_plan", renewsAt: "2026-12-01T00:00:00Z" });
+    expect(con).toBe(tf("interview.error.planLimitRenews", { date: "1 de diciembre de 2026" }));
+    expect(con).toContain("1 de diciembre de 2026");
+    expect(interviewErrorText({ status: 403, error: "limite_del_plan", renewsAt: null })).toBe(t("interview.error.planLimit"));
+    expect(interviewErrorText({ status: 403, error: "limite_del_plan", renewsAt: "basura" })).toBe(t("interview.error.planLimit"));
+  });
+  it("demasiados_intentos con Retry-After dice cuántos segundos esperar", () => {
+    expect(interviewErrorText({ status: 429, error: "demasiados_intentos", retryAfter: 17 })).toBe(tf("interview.error.rateLimitedIn", { n: 17 }));
+    expect(interviewErrorText({ status: 429, error: "demasiados_intentos", retryAfter: null })).toBe(t("interview.error.rateLimited"));
+  });
+  it("el resto cae al mensaje por código", () => {
+    expect(interviewErrorText({ status: 409, error: "estado_invalido" })).toBe(t("interview.error.state"));
+  });
+});
+
 describe("F13 errores en español, sin texto técnico", () => {
   const casos: [number, string | null, string][] = [
     [403, "nivel_bloqueado", "interview.error.levelLocked"],
     [403, "cuenta_no_disponible", "interview.error.forbidden"],
+    [403, "limite_del_plan", "interview.error.planLimit"],
     [409, "nivel_no_disponible", "interview.error.levelUnavailable"],
     [409, "sesion_en_curso", "interview.error.activeSession"],
     [409, "turno_en_proceso", "interview.error.turnInProgress"],
