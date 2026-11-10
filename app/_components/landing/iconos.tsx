@@ -44,6 +44,12 @@ export const IconoGrafica = ({ className }: { className?: string }) => (
   </Icono>
 );
 
+export const IconoCodigo = ({ className }: { className?: string }) => (
+  <Icono className={className}>
+    <path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14" />
+  </Icono>
+);
+
 export const IconoCheck = ({ className }: { className?: string }) => (
   <Icono className={className}>
     <path d="m5 12.5 4.5 4.5L19 7.5" />

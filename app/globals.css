@@ -250,6 +250,27 @@ h3 {
   font-size: 0.9375rem;
 }
 
+/* Registro e ingreso (AuthShell): más compacto, para que quepa en una pantalla sin scroll, y
+   nombre y apellido lado a lado cuando hay ancho. */
+.auth-form .formulario {
+  gap: 1rem;
+}
+
+@media (min-width: 40rem) {
+  .auth-form .formulario {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .auth-form .formulario > * {
+    grid-column: 1 / -1;
+  }
+
+  .auth-form .formulario > .campo:has(> input[name="first_name"]),
+  .auth-form .formulario > .campo:has(> input[name="last_name"]) {
+    grid-column: auto;
+  }
+}
+
 a {
   color: var(--acento);
 }

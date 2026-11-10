@@ -1,15 +1,16 @@
 import Link from "next/link";
 import BackgroundPaths from "@/app/_components/ui/background-paths";
 import TextRotate from "@/app/_components/ui/text-rotate";
-import { IconoFlecha } from "@/app/_components/landing/iconos";
+import { IconoCodigo, IconoFlecha } from "@/app/_components/landing/iconos";
 import { t, type MessageKey } from "@/lib/messages";
 
-const NOMBRES: MessageKey[] = [
-  "home.recruiters.ana.name",
-  "home.recruiters.martin.name",
-  "home.recruiters.laura.name",
-  "home.recruiters.carlos.name",
-  "home.recruiters.sofia.name",
+/** Qué se practica. Cada tipo es el estilo de un recruiter, que se presentan más abajo. */
+const TIPOS: MessageKey[] = [
+  "home.hero.kind.technical",
+  "home.hero.kind.hr",
+  "home.hero.kind.behavioral",
+  "home.hero.kind.english",
+  "home.hero.kind.startup",
 ];
 
 /** El primer pantallazo: fondo de líneas en movimiento, el eslogan y las dos llamadas. */
@@ -21,7 +22,7 @@ export default function Portada() {
     >
       <div className="mx-auto flex max-w-4xl flex-col items-center px-6 py-20 text-center">
         <p className="inline-flex items-center gap-2 rounded-full border border-indigo/20 bg-white/70 px-4 py-1.5 text-sm font-semibold text-indigo backdrop-blur dark:border-lavender/20 dark:bg-ink/60 dark:text-lavender">
-          <span className="size-2 rounded-full bg-mint" aria-hidden="true" />
+          <IconoCodigo className="size-4 text-indigo dark:text-coral" />
           {t("home.badge")}
         </p>
 
@@ -30,9 +31,9 @@ export default function Portada() {
         </h1>
 
         <p className="mt-7 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 font-display text-2xl font-bold text-ink sm:text-3xl dark:text-white">
-          {t("home.hero.practiceWith")}
+          {t("home.hero.practice")}
           <TextRotate
-            texts={NOMBRES.map((k) => t(k))}
+            texts={TIPOS.map((k) => t(k))}
             rotationInterval={2200}
             staggerDuration={0.025}
             staggerFrom="last"

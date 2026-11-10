@@ -15,7 +15,12 @@ export const es = {
   "home.nav.recruiters": "Recruiters",
   "home.nav.levels": "Niveles",
   "home.nav.signIn": "Iniciar sesión",
-  "home.hero.practiceWith": "Practica con",
+  "home.hero.practice": "Practica entrevistas",
+  "home.hero.kind.technical": "técnicas",
+  "home.hero.kind.hr": "de Recursos Humanos",
+  "home.hero.kind.behavioral": "conductuales",
+  "home.hero.kind.english": "en inglés",
+  "home.hero.kind.startup": "para startups",
   "home.hero.lead":
     "Recruiters con personalidad propia que repreguntan cuando respondes vago y, al terminar, te dicen por qué sacaste ese score y qué lo subiría.",
   "home.how.eyebrow": "Cómo funciona",
