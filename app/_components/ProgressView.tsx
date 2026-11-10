@@ -10,7 +10,9 @@ import { t, tf } from "@/lib/messages";
 function evolucion(serie: ProgressPoint[]): string {
   if (serie.length < 2) return t("progress.evolution.first");
   const delta = serie[serie.length - 1].score - serie[0].score;
+  if (delta === 1) return t("progress.evolution.upOne");
   if (delta > 0) return tf("progress.evolution.up", { n: delta });
+  if (delta === -1) return t("progress.evolution.downOne");
   if (delta < 0) return tf("progress.evolution.down", { n: -delta });
   return t("progress.evolution.same");
 }

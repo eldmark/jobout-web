@@ -70,6 +70,16 @@ describe("F11 la evolución", () => {
     }
     expect(screen.getByText(tf("progress.evolution.up", { n: 12 }))).toBeInTheDocument();
   });
+  it.each([
+    [70, 71, "Subiste 1 punto desde tu primera entrevista."],
+    [70, 82, "Subiste 12 puntos desde tu primera entrevista."],
+    [70, 69, "Tu último score está 1 punto por debajo del de tu primera entrevista. Sigue practicando."],
+    [70, 64, "Tu último score está 6 puntos por debajo del de tu primera entrevista. Sigue practicando."],
+  ])("BUG-002: de %i a %i dice «%s» (singular con 1 punto)", async (primero, ultimo, texto) => {
+    backend(LEVELS, [{ ...PROGRESO[0], score: primero }, { ...PROGRESO[1], score: ultimo }]);
+    render(<ProgressView />);
+    expect(await screen.findByText(texto, {}, ESPERA)).toBeInTheDocument();
+  });
   it("si bajó, lo dice con ánimo; si igual, también", async () => {
     backend(LEVELS, [{ ...PROGRESO[0], score: 80 }, { ...PROGRESO[1], score: 74 }]);
     render(<ProgressView />);
