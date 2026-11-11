@@ -439,6 +439,10 @@ export const es = {
   "account.delete.warning": "Vas a perder lo siguiente:",
   "account.delete.lossProfile": "Tu perfil y tus datos personales.",
   "account.delete.lossHistory": "Tu historial de prácticas y tu feedback.",
+  "account.delete.lossExternal": "Tus aplicaciones externas y lo que las empresas tenían marcado como favorito sobre ti.",
+  "account.delete.keeps": "Esto se queda, sin tu nombre:",
+  "account.delete.keepsApplications": "Las aplicaciones que enviaste siguen en la empresa, anónimas: sin tu nombre ni tus datos, como «candidato eliminado».",
+  "account.delete.keepsCompany": "Si trabajas en una empresa, las ofertas que creaste y tus decisiones sobre las aplicaciones siguen ahí, sin tu nombre.",
   "account.delete.irreversible": "Esta acción no se puede deshacer.",
   "account.delete.passwordHelp": "Para confirmar, escribe tu contraseña.",
   "account.delete.confirm": "Sí, borrar mi cuenta",
@@ -446,7 +450,7 @@ export const es = {
   "account.delete.working": "Borrando…",
   "account.delete.wrongPassword": "La contraseña no es correcta. Tu cuenta sigue activa.",
   "account.delete.lastAdmin":
-    "Eres el único administrador de tu empresa, así que todavía no puedes borrar tu cuenta. Invita a otra persona como administradora y espera a que acepte, o quita tu rol cuando ya haya otro. Cerrar la empresa o borrarla junto con tu cuenta aún no es posible. Tu cuenta sigue activa.",
+    "Eres el único administrador de tu empresa, así que todavía no puedes borrar tu cuenta. Invita a otra persona como administradora; cuando haya aceptado, podrás borrarla. Cerrar la empresa o borrarla junto con tu cuenta aún no es posible. Tu cuenta sigue activa.",
   "account.delete.failed": "No pudimos borrar tu cuenta. Sigue activa; inténtalo de nuevo.",
 
   "goodbye.title": "Tu cuenta fue borrada",

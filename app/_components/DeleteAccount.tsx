@@ -102,6 +102,12 @@ export default function DeleteAccount() {
               <ul>
                 <li>{t("account.delete.lossProfile")}</li>
                 <li>{t("account.delete.lossHistory")}</li>
+                <li>{t("account.delete.lossExternal")}</li>
+              </ul>
+              <p>{t("account.delete.keeps")}</p>
+              <ul>
+                <li>{t("account.delete.keepsApplications")}</li>
+                <li>{t("account.delete.keepsCompany")}</li>
               </ul>
               <p>
                 <strong>{t("account.delete.irreversible")}</strong>
