@@ -16,6 +16,11 @@ export interface Recruiter {
   language: string;
 }
 
+/** `GET /recruiters`: `ai_replies` (JB-92) es true solo si un modelo de IA redacta al recruiter en el servidor. */
+export interface RecruitersResponse extends ItemsResponse<Recruiter> {
+  ai_replies?: boolean;
+}
+
 export interface Level {
   id: string;
   code: string;

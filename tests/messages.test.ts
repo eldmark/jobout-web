@@ -13,6 +13,11 @@ describe("t(clave)", () => {
     // @ts-expect-error clave inválida a propósito
     expect(() => t("no.existe")).toThrow(/no.existe/);
   });
+  it("el aviso de la IA (JB-92) está en el catálogo y no queda vacío", () => {
+    for (const k of ["interview.start.ai.notice", "interview.start.ai.ack", "interview.start.validation.ai"] as const) {
+      expect(t(k).length, k).toBeGreaterThan(20);
+    }
+  });
   it("los mensajes están en tuteo (sin voseo)", () => {
     const voseo = /\b(Preparate|practicá|llegá|tenés|podés|hacé|Empezá|Ingresá)\b/i;
     for (const v of Object.values(es)) expect(v).not.toMatch(voseo);
