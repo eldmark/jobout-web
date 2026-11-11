@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ApplyDialog from "./ApplyDialog";
 import MatchBreakdown from "./MatchBreakdown";
+import PracticeOffer from "./PracticeOffer";
 import { offersApi } from "@/lib/offers/client";
 import { isMatch } from "@/lib/offers/match";
 import { applicationStatusLabel, formatDay, placeOf, publicCompany, safeWebsite } from "@/lib/offers/format";
@@ -149,6 +150,8 @@ export default function OfferDetail({ id }: { id: string }) {
           </button>
         )}
       </div>
+
+      <PracticeOffer offerId={oferta.id} />
 
       {isMatch(oferta.match) ? <MatchBreakdown match={oferta.match} viewer="candidate" level={2} /> : null}
 

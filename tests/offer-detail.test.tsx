@@ -43,6 +43,31 @@ async function abrir() {
   return dialogo();
 }
 
+describe("practicar la entrevista de la oferta", () => {
+  it("el detalle ofrece «Practicar esta entrevista» y, al pulsarla, crea la sesión con esa oferta y entra a la sala", async () => {
+    const b = stubFetch((c) => {
+      if (c.url === `/api/offers/${OID}`) return jsonRes(200, DETALLE());
+      if (c.url === "/api/recruiters") return jsonRes(200, { items: [{ id: "33333333-3333-4333-8333-333333333333", code: "ana", display_name: "Ana", role_title: "R", personality: "P", language: "es" }] });
+      if (c.url === "/api/levels") return jsonRes(200, { items: [{ id: "44444444-4444-4444-8444-444444444444", code: "junior", name: "Junior", position: 1, available: true, unlocked: true, min_score_to_unlock: null, best_score: null, sessions_completed: 0 }] });
+      if (c.url === "/api/interviews" && c.method === "POST") return jsonRes(201, { id: "22222222-2222-4222-8222-222222222222" });
+      return jsonRes(404);
+    });
+    render(<OfferDetail id={OID} />);
+    await listo();
+    fireEvent.click(screen.getByRole("button", { name: t("offer.practice.button") }));
+    await waitFor(() => expect(goTo).toHaveBeenCalledWith("/interviews/22222222-2222-4222-8222-222222222222"), ESPERA);
+    expect(b.llamadas.find((c) => c.url === "/api/interviews")?.body).toMatchObject({ job_offer_id: OID });
+    // No es aplicar: nada se envió a /applications.
+    expect(b.llamadas.some((c) => c.url.endsWith("/applications"))).toBe(false);
+  });
+  it("también se puede practicar una oferta a la que ya aplicaste", async () => {
+    backend({ oferta: DETALLE({ my_application: { id: AID, status: "applied" } }) });
+    render(<OfferDetail id={OID} />);
+    await listo();
+    expect(screen.getByRole("button", { name: t("offer.practice.button") })).toBeInTheDocument();
+  });
+});
+
 describe("detalle y requisitos", () => {
   it("cargando y luego el título, la empresa con su sitio, el lugar, la descripción y los requisitos", async () => {
     backend();

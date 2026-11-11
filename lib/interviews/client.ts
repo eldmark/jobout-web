@@ -65,7 +65,9 @@ export const interviewsApi = {
   levels: () => call<ItemsResponse<Level>>("/api/levels"),
   progress: () => call<ItemsResponse<ProgressPoint>>("/api/progress"),
   list: (params: ListParams = {}) => call<InterviewPage>(`/api/interviews${queryDe(params)}`),
-  create: (recruiterId: string, levelId: string) => call<Interview>("/api/interviews", "POST", { recruiter_id: recruiterId, level_id: levelId }),
+  /** `jobOfferId` (opcional): la sesión es la práctica de esa oferta publicada (HU-31). */
+  create: (recruiterId: string, levelId: string, jobOfferId?: string) =>
+    call<Interview>("/api/interviews", "POST", { recruiter_id: recruiterId, level_id: levelId, ...(jobOfferId ? { job_offer_id: jobOfferId } : {}) }),
   get: (id: string) => call<Interview>(base(id)),
   pause: (id: string) => call<null>(`${base(id)}/pause`, "POST"),
   resume: (id: string) => call<ResumeReply>(`${base(id)}/resume`, "POST"),

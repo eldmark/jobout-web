@@ -99,6 +99,31 @@ describe("crear y leer una sesión", () => {
     expect(llamadas[0]).toMatchObject({ url: "http://core-api:8080/api/v1/interviews", method: "POST", body: { recruiter_id: REC_ID, level_id: LVL_ID } });
     expect(llamadas[0].body).not.toHaveProperty("extra");
   });
+  it("POST /api/interviews reenvía job_offer_id cuando es un UUID y no lo inventa cuando falta o es null", async () => {
+    const OFERTA = "66666666-6666-4666-8666-666666666666";
+    const { llamadas } = stubFetch(() => jsonRes(201, SESION()));
+    await interviews.POST(rq("/api/interviews", "POST", { recruiter_id: REC_ID, level_id: LVL_ID, job_offer_id: OFERTA }));
+    await interviews.POST(rq("/api/interviews", "POST", { recruiter_id: REC_ID, level_id: LVL_ID, job_offer_id: null }));
+    await interviews.POST(rq("/api/interviews", "POST", { recruiter_id: REC_ID, level_id: LVL_ID }));
+    expect(llamadas[0].body).toEqual({ recruiter_id: REC_ID, level_id: LVL_ID, job_offer_id: OFERTA });
+    expect(llamadas[1].body).toEqual({ recruiter_id: REC_ID, level_id: LVL_ID });
+    expect(llamadas[2].body).toEqual({ recruiter_id: REC_ID, level_id: LVL_ID });
+  });
+  it("un job_offer_id que no es un UUID -> 422 sin tocar el backend", async () => {
+    const { fn } = stubFetch(() => jsonRes(201, SESION()));
+    for (const malo of ["x", "", 7, true, ["a"], { a: 1 }]) {
+      const res = await interviews.POST(rq("/api/interviews", "POST", { recruiter_id: REC_ID, level_id: LVL_ID, job_offer_id: malo }));
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({ error: "datos_invalidos" });
+    }
+    expect(fn).not.toHaveBeenCalled();
+  });
+  it("404 no_encontrado (oferta no visible) pasa tal cual", async () => {
+    stubFetch(() => jsonRes(404, { error: "no_encontrado", message: "texto del backend" }));
+    const res = await interviews.POST(rq("/api/interviews", "POST", { recruiter_id: REC_ID, level_id: LVL_ID, job_offer_id: "66666666-6666-4666-8666-666666666666" }));
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "no_encontrado" });
+  });
   it("ids mal formados -> 422 sin tocar el backend", async () => {
     const { fn } = stubFetch(() => jsonRes(201, SESION()));
     const res = await interviews.POST(rq("/api/interviews", "POST", { recruiter_id: "x", level_id: LVL_ID }));
