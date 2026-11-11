@@ -136,6 +136,17 @@ describe("F3/F4 la conversación", () => {
     // El foco lo mueve un efecto que corre después de pintar: se espera, no se supone.
     await waitFor(() => expect(campo()).toHaveFocus(), ESPERA);
   });
+  it("BUG-016: el foco automático no desplaza la página (avatar y encabezado siguen a la vista)", async () => {
+    const focus = vi.spyOn(HTMLTextAreaElement.prototype, "focus");
+    try {
+      await abrir();
+      await waitFor(() => expect(campo()).toHaveFocus(), ESPERA);
+      expect(focus).toHaveBeenCalled();
+      for (const [opts] of focus.mock.calls) expect(opts).toMatchObject({ preventScroll: true });
+    } finally {
+      focus.mockRestore();
+    }
+  });
 });
 
 describe("avatar del entrevistador", () => {

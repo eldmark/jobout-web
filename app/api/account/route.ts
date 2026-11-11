@@ -38,5 +38,10 @@ export async function DELETE(request: Request): Promise<Response> {
   }
   if (api.rotated) setTokenCookies(h, api.rotated);
   if (res.status === 403) return errorJson(403, "contrasena_incorrecta", h);
+  if (res.status === 409) {
+    // Único administrador de la empresa: no se borra nada y la persona debe saber por qué.
+    const cuerpo = (await res.json().catch(() => null)) as { error?: unknown } | null;
+    if (cuerpo?.error === "ultimo_administrador") return errorJson(409, "ultimo_administrador", h);
+  }
   return errorJson(502, "servicio_no_disponible", h);
 }

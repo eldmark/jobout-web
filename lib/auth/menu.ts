@@ -27,13 +27,18 @@ const EMPRESA: NavLink[] = [
 const REGISTRAR: NavLink = { href: "/company", key: "dashboard.nav.registerCompany" };
 const ADMIN: NavLink = { href: "/admin/companies", key: "dashboard.nav.adminCompanies" };
 
+/** BUG-018: los bloques propios del candidato (práctica, completar perfil, progreso) no van en el panel de quien trabaja en una empresa ni de la plataforma. */
+export function showsCandidateBlocks(roles: readonly string[]): boolean {
+  return !(roles.includes("company_admin") || roles.includes("recruiter") || roles.includes("admin"));
+}
+
 /** Los enlaces del panel principal, por grupos: candidato, empresa y administración de plataforma. */
 export function navFor(roles: readonly string[]): NavLink[] {
   const deEmpresa = roles.includes("company_admin") || roles.includes("recruiter");
   const enlaces: NavLink[] = [];
   if (roles.includes("applicant")) enlaces.push(...CANDIDATO);
   if (deEmpresa) enlaces.push(...EMPRESA);
-  else if (roles.includes("applicant")) enlaces.push(REGISTRAR);
+  else if (roles.includes("applicant") && !roles.includes("admin")) enlaces.push(REGISTRAR);
   if (roles.includes("admin")) enlaces.push(ADMIN);
   return enlaces;
 }

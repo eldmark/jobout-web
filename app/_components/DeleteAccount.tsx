@@ -4,6 +4,16 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { goTo } from "@/lib/navigate";
 import { t, type MessageKey } from "@/lib/messages";
 
+/** Qué mensaje corresponde a una respuesta que no es 204. */
+async function claveDeError(res: Response): Promise<MessageKey> {
+  if (res.status === 403) return "account.delete.wrongPassword";
+  if (res.status === 409) {
+    const cuerpo = (await res.json().catch(() => null)) as { error?: unknown } | null;
+    if (cuerpo?.error === "ultimo_administrador") return "account.delete.lastAdmin";
+  }
+  return "account.delete.failed";
+}
+
 export default function DeleteAccount() {
   const [abierto, setAbierto] = useState(false);
   const [clave, setClave] = useState("");
@@ -41,7 +51,7 @@ export default function DeleteAccount() {
         goTo("/adios");
         return;
       }
-      setError(res.status === 403 ? "account.delete.wrongPassword" : "account.delete.failed");
+      setError(await claveDeError(res));
     } catch {
       setError("account.delete.failed");
     }
@@ -92,6 +102,12 @@ export default function DeleteAccount() {
               <ul>
                 <li>{t("account.delete.lossProfile")}</li>
                 <li>{t("account.delete.lossHistory")}</li>
+                <li>{t("account.delete.lossExternal")}</li>
+              </ul>
+              <p>{t("account.delete.keeps")}</p>
+              <ul>
+                <li>{t("account.delete.keepsApplications")}</li>
+                <li>{t("account.delete.keepsCompany")}</li>
               </ul>
               <p>
                 <strong>{t("account.delete.irreversible")}</strong>

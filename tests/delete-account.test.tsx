@@ -35,6 +35,23 @@ describe("borrar mi cuenta", () => {
     expect(d).toHaveTextContent(t("account.delete.lossHistory"));
     expect(d).toHaveTextContent(t("account.delete.irreversible"));
   });
+  it("BUG-015: dice qué se queda sin tu nombre (aplicaciones; ofertas y decisiones de quien trabaja en una empresa) y qué más se borra", () => {
+    stubFetch(() => jsonRes(204));
+    render(<DeleteAccount />);
+    abrir();
+    const d = screen.getByRole("dialog");
+    for (const k of ["account.delete.lossExternal", "account.delete.keeps", "account.delete.keepsApplications", "account.delete.keepsCompany"] as const) {
+      expect(d, k).toHaveTextContent(t(k));
+    }
+    expect(t("account.delete.keepsApplications")).toMatch(/aplicaciones/);
+    expect(t("account.delete.keepsApplications")).toMatch(/sin tu nombre/);
+    expect(t("account.delete.keepsCompany")).toMatch(/ofertas/);
+    expect(t("account.delete.keepsCompany")).toMatch(/decisiones/);
+    // El API no promete nada sobre notas internas: el texto tampoco.
+    expect(t("account.delete.keepsCompany")).not.toMatch(/notas/i);
+    // Lo que se conserva va antes de la advertencia final, dentro de la descripción del diálogo.
+    expect(d).toHaveAccessibleDescription(expect.stringContaining(t("account.delete.keepsApplications")));
+  });
   it("el foco entra al diálogo (campo de contraseña) y Escape lo cierra devolviendo el foco", () => {
     stubFetch(() => jsonRes(204));
     render(<DeleteAccount />);
@@ -93,6 +110,29 @@ describe("borrar mi cuenta", () => {
     fireEvent.click(confirmar());
     await waitFor(() => expect(within(screen.getByRole("dialog")).getByRole("alert")).toHaveTextContent(t("account.delete.failed")));
     expect(goTo).not.toHaveBeenCalled();
+  });
+  it("BUG-014: 409 ultimo_administrador -> explica qué hacer y qué no se puede todavía, no el mensaje genérico", async () => {
+    stubFetch(() => jsonRes(409, { error: "ultimo_administrador" }));
+    render(<DeleteAccount />);
+    abrir();
+    escribirClave("una-clave-larga");
+    fireEvent.click(confirmar());
+    const alerta = () => within(screen.getByRole("dialog")).getByRole("alert");
+    await waitFor(() => expect(alerta()).toHaveTextContent(t("account.delete.lastAdmin")));
+    expect(alerta()).not.toHaveTextContent(t("account.delete.failed"));
+    expect(t("account.delete.lastAdmin")).toMatch(/único administrador/);
+    expect(t("account.delete.lastAdmin")).toMatch(/invita|nombra|transfiere/i);
+    expect(t("account.delete.lastAdmin")).toMatch(/todavía no|aún no/i);
+    expect(goTo).not.toHaveBeenCalled();
+    expect(confirmar()).toBeEnabled();
+  });
+  it("un 409 con otro código sigue mostrando el mensaje genérico", async () => {
+    stubFetch(() => jsonRes(409, { error: "otra_cosa" }));
+    render(<DeleteAccount />);
+    abrir();
+    escribirClave("una-clave-larga");
+    fireEvent.click(confirmar());
+    await waitFor(() => expect(within(screen.getByRole("dialog")).getByRole("alert")).toHaveTextContent(t("account.delete.failed")));
   });
   it("F10: fallo de red -> mensaje genérico y sin navegar", async () => {
     stubFetch(() => {

@@ -5,7 +5,8 @@ import { applicationStatusLabel, externalStatusLabel, formatDay, formatWait, pla
 import { consentBody, fieldAvailability } from "@/lib/offers/consent";
 import { fiveYearsBefore, todayLocal, toExternalInput, validateExternal } from "@/lib/offers/external";
 import { canWithdraw, MANDATORY_FIELDS, SHARED_FIELDS } from "@/lib/offers/types";
-import { navFor, parseRoles } from "@/lib/auth/menu";
+import { consultaDeUrl, consultaAUrl } from "@/lib/offers/url";
+import { navFor, parseRoles, showsCandidateBlocks } from "@/lib/auth/menu";
 import { formatDate } from "@/lib/interviews/format";
 import { APLICADA, EMPRESA, GUATEMALA, MIXCO, PERFIL, PERFIL_VACIO } from "./helpers/offers";
 
@@ -163,11 +164,52 @@ describe("FC6: el menú sale de los roles de /me", () => {
   });
   it("el admin de plataforma ve la verificación de empresas; sin rol de candidato no hay menú de candidato; nada supone un rol", () => {
     expect(navFor(["admin"]).map((l) => l.href)).toEqual(["/admin/companies"]);
-    expect(navFor(["applicant", "admin"]).map((l) => l.href)).toEqual(["/offers", "/applications", "/company", "/admin/companies"]);
+    expect(navFor(["applicant", "admin"]).map((l) => l.href)).toEqual(["/offers", "/applications", "/admin/companies"]);
     expect(navFor([])).toEqual([]);
+  });
+  it("BUG-018: «Registrar mi empresa» solo para quien es candidato y no administra la plataforma ni tiene empresa", () => {
+    expect(navFor(["applicant", "admin"]).map((l) => l.key)).not.toContain("dashboard.nav.registerCompany");
+    expect(navFor(["applicant"]).map((l) => l.key)).toContain("dashboard.nav.registerCompany");
+  });
+  it("BUG-018: los bloques de candidato (práctica, perfil, progreso) solo cuando la cuenta no es de empresa ni de plataforma", () => {
+    expect(showsCandidateBlocks(["applicant"])).toBe(true);
+    expect(showsCandidateBlocks([])).toBe(true);
+    for (const rol of ["recruiter", "company_admin", "admin"]) expect(showsCandidateBlocks(["applicant", rol]), rol).toBe(false);
   });
   it("parseRoles: solo cadenas; cualquier otra forma es una lista vacía", () => {
     expect(parseRoles(["applicant", 5, null, "recruiter"])).toEqual(["applicant", "recruiter"]);
     for (const x of [undefined, null, "applicant", { applicant: true }]) expect(parseRoles(x)).toEqual([]);
+  });
+});
+
+describe("BUG-017: orden y filtros de /offers en la URL", () => {
+  const P = "99999999-9999-4999-8999-000000000021";
+  const S = "99999999-9999-4999-8999-000000000001";
+  it("sin parámetros: la consulta por defecto", () => {
+    expect(consultaDeUrl({})).toEqual({ sort: "recent", filtros: {} });
+    expect(consultaDeUrl(new URLSearchParams(""))).toEqual({ sort: "recent", filtros: {} });
+  });
+  it("lee el orden y los filtros del contrato, de un objeto (servidor) o de URLSearchParams (navegador)", () => {
+    const esperado = { sort: "match", filtros: { profession_id: P, state_id: S } };
+    expect(consultaDeUrl({ sort: "match", profession_id: P, state_id: S })).toEqual(esperado);
+    expect(consultaDeUrl(new URLSearchParams(`sort=match&profession_id=${P}&state_id=${S}`))).toEqual(esperado);
+  });
+  it("ignora el cursor, lo desconocido, un orden inválido y los valores vacíos o raros; con repetidos, el primero", () => {
+    expect(consultaDeUrl({ cursor: "abc", q: "x", company_id: S, sort: "hackeado", profession_id: "", state_id: ["<b>", S], city_id: "a b" })).toEqual({ sort: "recent", filtros: {} });
+    expect(consultaDeUrl({ profession_id: [P, S] })).toEqual({ sort: "recent", filtros: { profession_id: P } });
+  });
+  it("un municipio sin departamento no se aplica (el filtro depende del departamento)", () => {
+    expect(consultaDeUrl({ city_id: P })).toEqual({ sort: "recent", filtros: {} });
+    expect(consultaDeUrl({ city_id: P, state_id: S })).toEqual({ sort: "recent", filtros: { state_id: S, city_id: P } });
+  });
+  it("escribe solo lo que no es el valor por defecto y nunca un cursor", () => {
+    expect(consultaAUrl({ sort: "recent", filtros: {} })).toBe("");
+    expect(consultaAUrl({ sort: "match", filtros: { profession_id: P, state_id: "", city_id: undefined } })).toBe(`?sort=match&profession_id=${P}`);
+    expect(consultaAUrl({ sort: "oldest", filtros: {} })).toBe("?sort=oldest");
+    expect(consultaAUrl({ sort: "match", filtros: { profession_id: P } })).not.toMatch(/cursor/);
+  });
+  it("ida y vuelta", () => {
+    const c = { sort: "oldest" as const, filtros: { state_id: S, city_id: P } };
+    expect(consultaDeUrl(new URLSearchParams(consultaAUrl(c)))).toEqual(c);
   });
 });
