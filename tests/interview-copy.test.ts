@@ -21,6 +21,15 @@ describe("F15 mensajes de entrevistas", () => {
     expect(todo).toMatch(/\b(tu|tus|tienes|puedes|necesitas|elige)\b/i);
     expect(todo).not.toMatch(/\b(usted|ustedes)\b/i);
   });
+  it("el aviso de la IA dice quién recibe las respuestas y pide no escribir datos sensibles (JB-92)", () => {
+    const aviso = es["interview.start.ai.notice"];
+    expect(aviso).toMatch(/modelo de IA/);
+    expect(aviso).toMatch(/OpenRouter/);
+    expect(aviso).toMatch(/guardarlas|entrenarse/);
+    expect(aviso).toMatch(/No escribas datos personales sensibles/);
+    expect(es["interview.start.ai.ack"]).toMatch(/Entiendo/);
+    expect(es["interview.start.validation.ai"]).toMatch(/aviso/i);
+  });
   it("cada clave usada en el código existe (nada de claves crudas)", () => {
     const usadas = new Set([...codigo.matchAll(/["'`]((?:interview|progress)\.[A-Za-z.]+|dashboard\.(?:practice|resume))["'`]/g)].map((m) => m[1]));
     expect(usadas.size).toBeGreaterThan(50);

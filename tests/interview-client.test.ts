@@ -93,6 +93,10 @@ describe("listados: siempre {items}; solo /interviews pagina por cursor", () => 
     const r = await interviewsApi.recruiters();
     expect(r.data?.items).toHaveLength(2);
   });
+  it("recruiters conserva ai_replies cuando el servidor lo manda (JB-92)", async () => {
+    stubFetch(() => jsonRes(200, { ...items(RECRUITERS), ai_replies: true }));
+    expect((await interviewsApi.recruiters()).data?.ai_replies).toBe(true);
+  });
   it("list sin parámetros -> GET /api/interviews", async () => {
     const { llamadas } = stubFetch(() => jsonRes(200, pagina([RESUMEN()], "sig")));
     const r = await interviewsApi.list();

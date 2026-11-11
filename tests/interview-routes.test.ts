@@ -37,6 +37,13 @@ describe("lecturas: recruiters, niveles, progreso y lista", () => {
     ["progress", () => progress.GET(rq("/api/progress")), "/api/v1/progress", items(PROGRESO)],
     ["interviews", () => interviews.GET(rq("/api/interviews")), "/api/v1/interviews", pagina([RESUMEN()], null)],
   ];
+  it("GET recruiters deja pasar ai_replies tal cual (JB-92)", async () => {
+    for (const valor of [true, false]) {
+      const cuerpo = { ...items(RECRUITERS), ai_replies: valor };
+      stubFetch(() => jsonRes(200, cuerpo));
+      expect(await (await recruiters.GET(rq("/api/recruiters"))).json()).toEqual(cuerpo);
+    }
+  });
   for (const [nombre, llamar, ruta, cuerpo] of casos) {
     it(`GET ${nombre} reenvía con Bearer a ${ruta} y devuelve el JSON`, async () => {
       const { llamadas } = stubFetch(() => jsonRes(200, cuerpo));

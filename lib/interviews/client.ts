@@ -1,6 +1,6 @@
 /** Llamadas del navegador al contrato de entrevistas (/api/*). Nunca ven tokens. */
 import { goTo } from "@/lib/navigate";
-import type { Interview, InterviewPage, InterviewScore, ItemsResponse, ListParams, Level, ProgressPoint, Recruiter, ResumeReply, TurnReply } from "./types";
+import type { Interview, InterviewPage, InterviewScore, ItemsResponse, ListParams, Level, ProgressPoint, RecruitersResponse, ResumeReply, TurnReply } from "./types";
 
 export interface Result<T> {
   status: number;
@@ -61,7 +61,7 @@ function queryDe(p: ListParams): string {
 const base = (id: string) => `/api/interviews/${id}`;
 
 export const interviewsApi = {
-  recruiters: () => call<ItemsResponse<Recruiter>>("/api/recruiters"),
+  recruiters: () => call<RecruitersResponse>("/api/recruiters"),
   levels: () => call<ItemsResponse<Level>>("/api/levels"),
   progress: () => call<ItemsResponse<ProgressPoint>>("/api/progress"),
   list: (params: ListParams = {}) => call<InterviewPage>(`/api/interviews${queryDe(params)}`),

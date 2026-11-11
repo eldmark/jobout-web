@@ -8,7 +8,7 @@ import type { Level, Recruiter } from "@/lib/interviews/types";
 import { goTo } from "@/lib/navigate";
 import { t, tf, type MessageKey } from "@/lib/messages";
 
-type Datos = { recruiters: Recruiter[]; levels: Level[] };
+type Datos = { recruiters: Recruiter[]; levels: Level[]; aiReplies: boolean };
 
 /** Motivo por el que un nivel no se puede elegir; null si se puede. */
 export function levelReason(level: Level, levels: Level[]): string | null {
@@ -26,8 +26,9 @@ export default function InterviewStart() {
   const [cargaFallo, setCargaFallo] = useState(false);
   const [recruiterId, setRecruiterId] = useState("");
   const [levelId, setLevelId] = useState("");
-  const [errores, setErrores] = useState({} as { recruiter?: MessageKey; level?: MessageKey });
+  const [errores, setErrores] = useState({} as { recruiter?: MessageKey; level?: MessageKey; ai?: MessageKey });
   const [errorGeneral, setErrorGeneral] = useState(null as string | null);
+  const [aiAck, setAiAck] = useState(false);
   const [activa, setActiva] = useState(null as string | null);
   const [enviando, setEnviando] = useState(false);
   const enVuelo = useRef(false);
@@ -37,7 +38,7 @@ export default function InterviewStart() {
     setCargaFallo(false);
     setDatos(null);
     const [r, l] = await Promise.all([interviewsApi.recruiters(), interviewsApi.levels()]);
-    if (r.data && l.data) setDatos({ recruiters: r.data.items, levels: [...l.data.items].sort((a, b) => a.position - b.position) });
+    if (r.data && l.data) setDatos({ recruiters: r.data.items, aiReplies: r.data.ai_replies === true, levels: [...l.data.items].sort((a, b) => a.position - b.position) });
     else if (r.status !== 401 && l.status !== 401) setCargaFallo(true);
   }, []);
 
@@ -54,8 +55,9 @@ export default function InterviewStart() {
     if (!recruiterId) e.recruiter = "interview.start.validation.recruiter";
     const elegido = datos?.levels.find((l) => l.id === levelId);
     if (!elegido || levelReason(elegido, datos!.levels)) e.level = "interview.start.validation.level";
+    if (datos?.aiReplies && !aiAck) e.ai = "interview.start.validation.ai";
     setErrores(e);
-    const grupo = e.recruiter ? "recruiter" : e.level ? "level" : null;
+    const grupo = e.recruiter ? "recruiter" : e.level ? "level" : e.ai ? "ai_ack" : null;
     if (grupo) {
       formRef.current?.querySelector<HTMLInputElement>(`input[name="${grupo}"]:not(:disabled)`)?.focus();
       return;
@@ -183,6 +185,33 @@ export default function InterviewStart() {
             </p>
           ) : null}
         </fieldset>
+        {datos.aiReplies ? (
+          <div className="aviso" role="note">
+            <p id="ia-aviso">{t("interview.start.ai.notice")}</p>
+            <div className="casilla">
+              <input
+                type="checkbox"
+                id="ia-acepto"
+                name="ai_ack"
+                checked={aiAck}
+                required
+                disabled={enviando}
+                aria-invalid={errores.ai ? true : undefined}
+                aria-describedby={errores.ai ? "ia-aviso err-ia" : "ia-aviso"}
+                onChange={(ev) => {
+                  setAiAck(ev.target.checked);
+                  setErrores((x) => ({ ...x, ai: undefined }));
+                }}
+              />
+              <label htmlFor="ia-acepto">{t("interview.start.ai.ack")}</label>
+            </div>
+            {errores.ai ? (
+              <p className="campo__error" id="err-ia">
+                {t(errores.ai)}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         <button className="boton boton--coral" type="submit" disabled={enviando} aria-busy={enviando}>
           {enviando ? t("interview.start.submitting") : t("interview.start.submit")}
         </button>

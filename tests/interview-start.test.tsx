@@ -223,3 +223,68 @@ describe("F13 errores al empezar, en español y anunciados", () => {
     expect(screen.getByRole("link", { name: t("interview.start.resumeActive") })).toHaveAttribute("href", `/interviews/${SID}`);
   });
 });
+
+/** JB-92: aviso de privacidad solo cuando el servidor dice que la IA redacta (`ai_replies: true`). */
+describe("aviso de privacidad de la IA", () => {
+  const conIa = (activa: boolean | undefined) =>
+    backend((c) => (c.url === "/api/recruiters" ? jsonRes(200, { ...items(RECRUITERS), ...(activa === undefined ? {} : { ai_replies: activa }) }) : undefined));
+
+  for (const [nombre, valor] of [["false", false], ["ausente", undefined]] as const) {
+    it(`con ai_replies ${nombre}: no hay aviso ni casilla y se empieza como siempre`, async () => {
+      const { llamadas } = conIa(valor);
+      render(<InterviewStart />);
+      await elegir();
+      expect(screen.queryByText(t("interview.start.ai.notice"))).not.toBeInTheDocument();
+      expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+      llamadas.length = 0;
+      backend((c) => (c.url === "/api/interviews" && c.method === "POST" ? jsonRes(201, SESION()) : undefined));
+      fireEvent.click(empezar());
+      await vi.waitFor(() => expect(goTo).toHaveBeenCalledWith(`/interviews/${SID}`), ESPERA);
+    });
+  }
+
+  it("con ai_replies true: muestra el aviso, nombra a OpenRouter y pide la casilla, desmarcada", async () => {
+    conIa(true);
+    render(<InterviewStart />);
+    await elegir();
+    const aviso = screen.getByText(t("interview.start.ai.notice"));
+    expect(aviso).toHaveTextContent(/OpenRouter/);
+    expect(aviso).toHaveTextContent(/datos personales sensibles/);
+    const casilla = screen.getByRole("checkbox", { name: t("interview.start.ai.ack") });
+    expect(casilla).not.toBeChecked();
+    expect(casilla).toBeRequired();
+    expect(casilla).toHaveAccessibleDescription(t("interview.start.ai.notice"));
+  });
+
+  it("sin marcarla no se empieza: error anunciado, casilla con foco y sin POST", async () => {
+    const { llamadas } = conIa(true);
+    render(<InterviewStart />);
+    await elegir();
+    fireEvent.click(empezar());
+    const casilla = screen.getByRole("checkbox", { name: t("interview.start.ai.ack") });
+    const error = screen.getByText(t("interview.start.validation.ai"));
+    expect(error).toBeInTheDocument();
+    expect(casilla).toHaveAttribute("aria-invalid", "true");
+    expect(casilla).toHaveAccessibleDescription(new RegExp(t("interview.start.validation.ai")));
+    expect(casilla).toHaveFocus();
+    expect(posts(llamadas)).toHaveLength(0);
+  });
+
+  it("al marcarla desaparece el error y se empieza una sola vez (teclado: Espacio la alterna)", async () => {
+    const { llamadas } = backend((c) => {
+      if (c.url === "/api/recruiters") return jsonRes(200, { ...items(RECRUITERS), ai_replies: true });
+      if (c.url === "/api/interviews" && c.method === "POST") return jsonRes(201, SESION());
+      return undefined;
+    });
+    render(<InterviewStart />);
+    await elegir();
+    fireEvent.click(empezar());
+    const casilla = screen.getByRole("checkbox", { name: t("interview.start.ai.ack") });
+    fireEvent.click(casilla); // lo mismo que hace Espacio sobre una casilla nativa
+    expect(casilla).toBeChecked();
+    expect(screen.queryByText(t("interview.start.validation.ai"))).not.toBeInTheDocument();
+    fireEvent.click(empezar());
+    await vi.waitFor(() => expect(goTo).toHaveBeenCalledWith(`/interviews/${SID}`), ESPERA);
+    expect(posts(llamadas)).toHaveLength(1);
+  });
+});
