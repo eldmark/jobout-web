@@ -72,6 +72,9 @@ export function errorKey(status: number, error: string | null): MessageKey {
     case "no_encontrado":
       return "cv.error.notFound";
     default:
+      if (status === 0) return "cv.error.network";
+      if (status === 429) return "cv.error.tooMany";
+      if (status >= 500) return "cv.error.unavailable";
       return status === 422 ? "cv.error.invalid" : "cv.error.generic";
   }
 }
