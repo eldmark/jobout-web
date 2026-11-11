@@ -19,6 +19,17 @@ describe("F2 rutas públicas sin sesión", () => {
       expect(decideRoute(p, false)).toEqual({ action: "allow" });
     });
   }
+  // Demo de la presentación: la página y sus GIF se ven sin iniciar sesión.
+  for (const p of ["/demo", "/demo/", "/demo/candidato-cv-entrevista.gif"]) {
+    it(`${p} se permite (demo)`, () => {
+      expect(decideRoute(p, false)).toEqual({ action: "allow" });
+    });
+  }
+  it("un prefijo parecido a /demo no cuenta como público", () => {
+    expect(decideRoute("/demostracion", false).action).toBe("redirect");
+    expect(decideRoute("/dashboard/demo", false).action).toBe("redirect");
+  });
+
   it("un prefijo parecido no cuenta como público", () => {
     expect(decideRoute("/sign-industry", false).action).toBe("redirect");
     expect(decideRoute("/health-private", false).action).toBe("redirect");

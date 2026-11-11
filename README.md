@@ -8,6 +8,28 @@ No persiste nada: pinta lo que devuelve `jobout-core-api` y conduce la entrevist
 Documentación del proyecto: **[jobout-docs](https://github.com/eldmark/jobout-docs)**.
 Reglas para agentes: [`AGENTS.md`](AGENTS.md).
 
+## Demo
+
+Recorridos grabados de la plataforma (datos inventados). También se ven en la app en
+**`/demo`**, sin iniciar sesión (`http://localhost:3000/demo`). Los GIF viven en
+[`public/demo/`](public/demo/).
+
+**Candidata: oferta, práctica y retiro** — afinidad con su perfil, práctica de la entrevista de la oferta y retiro de una aplicación.
+
+![Candidata: oferta, práctica y retiro](public/demo/candidato-oferta-practicar-retirar.gif)
+
+**Empresa: equipo, oferta y verificación** — invitaciones, requisitos de una oferta y verificación de la empresa por la plataforma.
+
+![Empresa: equipo, oferta y verificación](public/demo/empresa-equipo-oferta-verificacion.gif)
+
+**Empresa: panel de aplicantes** — solo lo que la persona consintió; favoritos y cambios de estado.
+
+![Empresa: panel de aplicantes](public/demo/empresa-panel-aplicaciones.gif)
+
+**Borrado de cuenta** — los datos personales se eliminan y lo que queda se anonimiza.
+
+![Borrado de cuenta](public/demo/borrado-de-cuentas.gif)
+
 ## Levantar
 
 ```bash
