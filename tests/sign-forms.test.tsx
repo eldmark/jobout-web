@@ -6,6 +6,7 @@ import { t } from "@/lib/messages";
 import { goTo } from "@/lib/navigate";
 import SignUpPage from "@/app/sign-up/page";
 import SignInPage from "@/app/sign-in/page";
+import { alertaCon } from "./helpers/alerta";
 
 vi.mock("@/lib/navigate", () => ({ goTo: vi.fn() }));
 
@@ -66,8 +67,7 @@ describe("/sign-up (F7)", () => {
     render(<SignUpPage />);
     llenarRegistro();
     enviar("auth.signUp.submit");
-    const alerta = await screen.findByRole("alert");
-    expect(alerta).toHaveTextContent(t("auth.error.registerUnavailable"));
+    const alerta = await alertaCon(t("auth.error.registerUnavailable"));
     expect(alerta.textContent).not.toMatch(/ana@mail\.com|ya existe|registrado/i);
     expect(alerta).toHaveAttribute("aria-live");
     expect(goTo).not.toHaveBeenCalled();
@@ -77,7 +77,7 @@ describe("/sign-up (F7)", () => {
     render(<SignUpPage />);
     llenarRegistro();
     enviar("auth.signUp.submit");
-    expect(await screen.findByRole("alert")).toHaveTextContent(t("auth.error.invalidData"));
+    await alertaCon(t("auth.error.invalidData"));
     cleanup();
     stubFetch(() => {
       throw new TypeError("fetch failed");
@@ -85,7 +85,7 @@ describe("/sign-up (F7)", () => {
     render(<SignUpPage />);
     llenarRegistro();
     enviar("auth.signUp.submit");
-    expect(await screen.findByRole("alert")).toHaveTextContent(t("auth.error.generic"));
+    await alertaCon(t("auth.error.generic"));
     expect(screen.getByRole("button", { name: t("auth.signUp.submit") })).toBeEnabled();
   });
   it("doble envío rápido llama una sola vez", async () => {
@@ -142,7 +142,7 @@ describe("/sign-in", () => {
     stubFetch(() => jsonRes(status, { error }));
     render(<SignInPage />);
     entrar();
-    expect(await screen.findByRole("alert")).toHaveTextContent(t(key));
+    await alertaCon(t(key));
   });
   it("401 no distingue entre correo inexistente y contraseña mala", () => {
     expect(t("auth.error.invalidCredentials")).not.toMatch(/no existe|no registrado|no encontr/i);
