@@ -701,6 +701,19 @@ textarea {
   gap: 0.75rem 1rem;
 }
 
+/* Una celda de rejilla no baja de su contenido (min-width: auto): un select con opciones largas
+   se salía de su columna y tapaba al vecino. Cada celda se encoge y el select llena la suya. */
+.filtros__campos > .campo {
+  min-width: 0;
+}
+
+.filtros__campos select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  text-overflow: ellipsis;
+}
+
 .campo select:disabled {
   opacity: 0.6;
   cursor: not-allowed;

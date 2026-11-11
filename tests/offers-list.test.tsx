@@ -7,6 +7,7 @@ import { t, tf } from "@/lib/messages";
 import { goTo } from "@/lib/navigate";
 import { formatDay } from "@/lib/offers/format";
 import OffersList from "@/app/_components/OffersList";
+import { leer } from "./helpers/fuentes";
 
 vi.mock("@/lib/navigate", () => ({ goTo: vi.fn() }));
 const ESPERA = { timeout: 5000 };
@@ -322,5 +323,25 @@ describe("matching: la afinidad en el listado", () => {
     render(<OffersList />);
     await listo();
     expect(screen.queryByText(t("offers.match.unavailable"))).toBeNull();
+  });
+});
+
+describe("BUG-013: los selectores de filtro caben en su celda a cualquier ancho", () => {
+  /** Cuerpos de las reglas cuyo selector (uno de la lista) es exactamente `sel`, sin comentarios. */
+  const regla = (sel: string) =>
+    [...leer("app/globals.css").replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+      .filter(([, s]) => s.trim().split(/\s*,\s*/).includes(sel))
+      .map(([, , cuerpo]) => cuerpo)
+      .join(";");
+
+  it("cada celda de la rejilla puede encogerse (min-width: 0) y el select llena su celda sin salirse", () => {
+    expect(regla(".filtros__campos > .campo")).toMatch(/min-width:\s*0\b/);
+    const select = regla(".filtros__campos select");
+    expect(select).toMatch(/width:\s*100%/);
+    expect(select).toMatch(/min-width:\s*0\b/);
+    expect(select).toMatch(/max-width:\s*100%/);
+  });
+  it("la rejilla no usa colores a mano", () => {
+    expect(regla(".filtros__campos")).not.toMatch(/#[0-9a-f]{3,8}\b|rgb\(|hsl\(/i);
   });
 });
