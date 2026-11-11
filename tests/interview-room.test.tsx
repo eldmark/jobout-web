@@ -50,6 +50,25 @@ async function abrir(extra?: Manejador, sesion?: unknown) {
   return b;
 }
 
+describe("práctica de una oferta (HU-31)", () => {
+  it("si la sesión está vinculada a una oferta, dice «Practicando: título» arriba de la conversación", async () => {
+    await abrir(undefined, SESION({ offer: { id: "66666666-6666-4666-8666-666666666666", title: "Desarrollador backend", company_name: "Café Nuevo S.A." } }));
+    const aviso = screen.getByText(tf("interview.room.practicing", { title: "Desarrollador backend" }));
+    expect(aviso).toBeInTheDocument();
+    expect(aviso.compareDocumentPosition(campo()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+  it("con una oferta confidencial (sin empresa) también, y el título se pinta como texto, no como HTML", async () => {
+    await abrir(undefined, SESION({ offer: { id: "66666666-6666-4666-8666-666666666666", title: "<b>Gerente</b>", company_name: null } }));
+    const aviso = screen.getByText(tf("interview.room.practicing", { title: "<b>Gerente</b>" }));
+    expect(aviso.querySelector("b")).toBeNull();
+    expect(screen.getByRole("main")).not.toHaveTextContent("null");
+  });
+  it("sin oferta no aparece nada de práctica", async () => {
+    await abrir();
+    expect(screen.queryByText(/Practicando:/)).toBeNull();
+  });
+});
+
 describe("carga (tres estados)", () => {
   it("muestra cargando y luego la sesión", async () => {
     backend();

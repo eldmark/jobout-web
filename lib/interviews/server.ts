@@ -79,7 +79,11 @@ export async function crear(request: Request): Promise<Response> {
   if (typeof b.recruiter_id !== "string" || typeof b.level_id !== "string" || !UUID_RE.test(b.recruiter_id) || !UUID_RE.test(b.level_id)) {
     return errorJson(422, "datos_invalidos");
   }
-  return reenviar(request, { method: "POST", path: "/interviews", body: { recruiter_id: b.recruiter_id, level_id: b.level_id }, ok: { 201: "json" } });
+  // `job_offer_id` es opcional (práctica de una oferta): ausente o null = entrevista de siempre; otra cosa que un UUID, 422.
+  const oferta = b.job_offer_id;
+  if (oferta !== undefined && oferta !== null && (typeof oferta !== "string" || !UUID_RE.test(oferta))) return errorJson(422, "datos_invalidos");
+  const body = { recruiter_id: b.recruiter_id, level_id: b.level_id, ...(typeof oferta === "string" ? { job_offer_id: oferta } : {}) };
+  return reenviar(request, { method: "POST", path: "/interviews", body, ok: { 201: "json" } });
 }
 
 export async function enviarTurno(request: Request, params: Promise<{ id: string }>): Promise<Response> {

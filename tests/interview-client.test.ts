@@ -10,6 +10,8 @@ import { interviewErrorKey, interviewErrorText } from "@/lib/interviews/errors";
 import { formatDate, formatRenewal } from "@/lib/interviews/format";
 import { countChars } from "@/lib/interviews/types";
 
+const OFFER_ID = "66666666-6666-4666-8666-666666666666";
+
 vi.mock("@/lib/navigate", () => ({ goTo: vi.fn() }));
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -23,6 +25,7 @@ describe("interviewsApi: una función por endpoint", () => {
     ["progress", () => interviewsApi.progress(), "GET", "/api/progress", undefined],
     ["list", () => interviewsApi.list(), "GET", "/api/interviews", undefined],
     ["create", () => interviewsApi.create(REC_ID, LVL_ID), "POST", "/api/interviews", { recruiter_id: REC_ID, level_id: LVL_ID }],
+    ["create con oferta", () => interviewsApi.create(REC_ID, LVL_ID, OFFER_ID), "POST", "/api/interviews", { recruiter_id: REC_ID, level_id: LVL_ID, job_offer_id: OFFER_ID }],
     ["get", () => interviewsApi.get(SID), "GET", `/api/interviews/${SID}`, undefined],
     ["pause", () => interviewsApi.pause(SID), "POST", `/api/interviews/${SID}/pause`, undefined],
     ["resume", () => interviewsApi.resume(SID), "POST", `/api/interviews/${SID}/resume`, undefined],

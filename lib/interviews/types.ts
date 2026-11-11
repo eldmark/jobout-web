@@ -46,6 +46,14 @@ export interface Interview {
   /** ISO 8601 con zona. */
   created_at: string;
   turns: Turn[];
+  /** Solo si la sesión es la práctica de una oferta (HU-31). `company_name` es nulo si la oferta es confidencial. */
+  offer?: OfferRef;
+}
+
+export interface OfferRef {
+  id: string;
+  title: string;
+  company_name: string | null;
 }
 
 export interface InterviewSummary {
@@ -58,6 +66,7 @@ export interface InterviewSummary {
   created_at: string;
   /** Nulo si la sesión no terminó. */
   completed_at: string | null;
+  offer?: OfferRef;
 }
 
 /** Listados sin paginar: siempre `{items}`. */

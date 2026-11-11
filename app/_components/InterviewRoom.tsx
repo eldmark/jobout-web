@@ -248,6 +248,7 @@ export default function InterviewRoom({ id }: { id: string }) {
     <main className="pagina">
       <p className="marca">{t("brand.name")}</p>
       <h1>{nombre}</h1>
+      {sesion?.offer ? <p className="aviso">{tf("interview.room.practicing", { title: sesion.offer.title })}</p> : null}
       <p className="eslogan">
         {sesion.recruiter.role_title} · {sesion.level.name}
       </p>

@@ -159,6 +159,7 @@ export const es = {
   "interview.level.lockedGeneric": "Bloqueado: supera el nivel anterior para desbloquearlo.",
   "interview.level.unavailable": "Aún no está disponible: lo estamos preparando.",
 
+  "interview.room.practicing": "Practicando: {title}",
   "interview.room.loading": "Cargando tu entrevista…",
   "interview.room.loadError": "No pudimos cargar tu entrevista. Inténtalo de nuevo.",
   "interview.room.retry": "Reintentar",
@@ -874,6 +875,12 @@ export const es = {
   "offer.website": "Sitio web de la empresa",
   "offer.apply": "Aplicar",
   "offer.applied": "Ya aplicaste a esta oferta. Estado: {status}.",
+  "offer.practice.button": "Practicar esta entrevista",
+  "offer.practice.starting": "Preparando tu práctica…",
+  "offer.practice.hint": "Practica con un recruiter preguntas sobre este puesto. No aplica a la oferta ni la empresa lo ve.",
+  "offer.practice.noLevel": "No tienes un nivel disponible para practicar ahora. Revisa tu progreso e inténtalo más tarde.",
+  "offer.practice.loadError": "No pudimos preparar tu práctica. Inténtalo de nuevo.",
+  "offer.practice.notAvailable": "Esta oferta ya no está disponible para practicar.",
   "offer.appliedNow": "Listo: aplicaste a esta oferta. Sigue su estado en «Mis aplicaciones».",
   "offer.confidentialNotice": "Esta oferta es confidencial: sabrás qué empresa es solo si te preseleccionan.",
 
