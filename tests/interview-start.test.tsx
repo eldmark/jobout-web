@@ -7,6 +7,7 @@ import { SID, SESION, RECRUITERS, LEVELS, items } from "./helpers/interview";
 import { t, tf } from "@/lib/messages";
 import { goTo } from "@/lib/navigate";
 import InterviewStart from "@/app/_components/InterviewStart";
+import { alertaCon } from "./helpers/alerta";
 
 vi.mock("@/lib/navigate", () => ({ goTo: vi.fn() }));
 const ESPERA = { timeout: 5000 };
@@ -77,7 +78,7 @@ describe("F2 elegir recruiter y nivel", () => {
     let falla = true;
     backend((c) => (falla && c.url === "/api/levels" ? jsonRes(502, { error: "servicio_no_disponible" }) : undefined));
     render(<InterviewStart />);
-    expect(await screen.findByRole("alert", {}, ESPERA)).toHaveTextContent(t("interview.start.loadError"));
+    await alertaCon(t("interview.start.loadError"), ESPERA);
     falla = false;
     fireEvent.click(screen.getByRole("button", { name: t("interview.start.retry") }));
     expect(await screen.findByRole("group", { name: t("interview.recruiter.legend") }, ESPERA)).toBeInTheDocument();
@@ -188,8 +189,7 @@ describe("F13 errores al empezar, en español y anunciados", () => {
       render(<InterviewStart />);
       await elegir();
       fireEvent.click(empezar());
-      const alerta = await screen.findByRole("alert", {}, ESPERA);
-      expect(alerta).toHaveTextContent(t(clave as Parameters<typeof t>[0]));
+      await alertaCon(t(clave as Parameters<typeof t>[0]), ESPERA);
       expect(goTo).not.toHaveBeenCalled();
       expect(empezar()).toBeEnabled();
       fireEvent.click(empezar());
@@ -202,8 +202,7 @@ describe("F13 errores al empezar, en español y anunciados", () => {
     render(<InterviewStart />);
     await elegir();
     fireEvent.click(empezar());
-    const alerta = await screen.findByRole("alert", {}, ESPERA);
-    expect(alerta).toHaveTextContent(tf("interview.error.planLimitRenews", { date: "1 de diciembre de 2026" }));
+    const alerta = await alertaCon(tf("interview.error.planLimitRenews", { date: "1 de diciembre de 2026" }), ESPERA);
     expect(alerta).toHaveTextContent("1 de diciembre de 2026");
     expect(goTo).not.toHaveBeenCalled();
     expect(empezar()).toBeEnabled();
@@ -213,14 +212,14 @@ describe("F13 errores al empezar, en español y anunciados", () => {
     render(<InterviewStart />);
     await elegir();
     fireEvent.click(empezar());
-    expect(await screen.findByRole("alert", {}, ESPERA)).toHaveTextContent(tf("interview.error.rateLimitedIn", { n: 12 }));
+    await alertaCon(tf("interview.error.rateLimitedIn", { n: 12 }), ESPERA);
   });
   it("409 sesion_en_curso ofrece «Retoma tu entrevista» hacia esa sesión", async () => {
     backend((c) => (c.method === "POST" ? jsonRes(409, { error: "sesion_en_curso", session_id: SID }) : undefined));
     render(<InterviewStart />);
     await elegir();
     fireEvent.click(empezar());
-    expect(await screen.findByRole("alert", {}, ESPERA)).toHaveTextContent(t("interview.error.activeSession"));
+    await alertaCon(t("interview.error.activeSession"), ESPERA);
     expect(screen.getByRole("link", { name: t("interview.start.resumeActive") })).toHaveAttribute("href", `/interviews/${SID}`);
   });
 });
