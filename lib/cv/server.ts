@@ -7,7 +7,20 @@ import { SessionExpiredError } from "@/lib/api/client";
 import { authedBackend, clearSessionCookies, errorJson, readJson, setTokenCookies, API_PREFIX } from "@/lib/auth/server";
 
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export const CATALOGOS = ["skills", "languages", "academic-levels", "professions", "job-hierarchies"] as const;
+/** Los del perfil (Fase 2) y los que usan los filtros de ofertas (Fase 5a). `zones` y `membership-types` no se sirven. */
+export const CATALOGOS = [
+  "skills",
+  "languages",
+  "academic-levels",
+  "professions",
+  "job-hierarchies",
+  "states",
+  "cities",
+  "contract-types",
+  "salary-ranges",
+  "working-shifts",
+  "employment-sectors",
+] as const;
 
 const CODIGOS_POR_ESTADO: Record<number, string> = {
   404: "no_encontrado",

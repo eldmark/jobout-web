@@ -4,6 +4,7 @@ import DashboardView, { type Me } from "@/app/_components/DashboardView";
 import { ME_PATH } from "@/lib/api/client";
 import { SESSION_COOKIE } from "@/lib/auth/cookies";
 import { backendUrl } from "@/lib/auth/server";
+import { parseRoles } from "@/lib/auth/menu";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +73,8 @@ export default async function Dashboard({
   let me: Me | null = null;
   if (res?.ok) {
     const data: Partial<Me> | null = await res.json().catch(() => null);
-    if (data && typeof data.first_name === "string" && data.plan) me = data as Me;
+    // Los roles eligen el menú (FC6); con otra forma, ninguno: nunca se inventa un rol.
+    if (data && typeof data.first_name === "string" && data.plan) me = { ...(data as Me), roles: parseRoles(data.roles) };
   }
   const [completeProfile, activeInterviewId] = me ? await Promise.all([needsProfile(access), activeInterview(access)]) : [false, null];
   return <DashboardView me={me} completeProfile={completeProfile} activeInterviewId={activeInterviewId} />;

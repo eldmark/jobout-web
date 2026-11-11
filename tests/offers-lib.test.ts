@@ -1,7 +1,7 @@
 /** Funciones puras de ofertas y aplicaciones (Fase 5a, paso 11): cada una con su prueba unitaria. */
 import { describe, it, expect, afterEach } from "vitest";
 import { t, tf } from "@/lib/messages";
-import { formatDay, formatWait, placeOf, publicCompany, revealedCompany, safeWebsite } from "@/lib/offers/format";
+import { applicationStatusLabel, externalStatusLabel, formatDay, formatWait, placeOf, publicCompany, revealedCompany, safeWebsite } from "@/lib/offers/format";
 import { consentBody, fieldAvailability } from "@/lib/offers/consent";
 import { fiveYearsBefore, todayLocal, toExternalInput, validateExternal } from "@/lib/offers/external";
 import { canWithdraw, MANDATORY_FIELDS, SHARED_FIELDS } from "@/lib/offers/types";
@@ -17,10 +17,10 @@ afterEach(() => {
 describe("fechas", () => {
   it("formatDay: una fecha AAAA-MM-DD es un día de calendario, no se corre al anterior en Guatemala", () => {
     process.env.TZ = "America/Guatemala";
-    const esperado = new Intl.DateTimeFormat("es-GT", { dateStyle: "medium", timeZone: "UTC" }).format(Date.UTC(2026, 10, 12));
-    expect(formatDay("2026-11-12")).toBe(esperado);
-    expect(formatDay("2026-11-12")).toMatch(/\b12\b/);
-    expect(formatDay("2026-11-12")).not.toMatch(/\b11\b/);
+    const fmt = (ms: number) => new Intl.DateTimeFormat("es-GT", { dateStyle: "medium", timeZone: "UTC" }).format(ms);
+    expect(formatDay("2026-11-12")).toBe(fmt(Date.UTC(2026, 10, 12)));
+    expect(formatDay("2026-11-12")).not.toBe(fmt(Date.UTC(2026, 10, 11)));
+    expect(formatDay("2026-01-01")).toBe(fmt(Date.UTC(2026, 0, 1)));
   });
   it("formatDay: lo que no es una fecha no produce texto roto", () => {
     for (const x of ["", "mañana", "2026-13-01", "2026-02-30", "2026-11-12T00:00:00Z"]) expect(formatDay(x), x).toBe("");
@@ -32,7 +32,8 @@ describe("fechas", () => {
     expect(formatWait(30)).toBe(t("offers.wait.minute"));
     expect(formatWait(60)).toBe(t("offers.wait.minute"));
     expect(formatWait(61)).toBe(tf("offers.wait.minutes", { n: 2 }));
-    expect(formatWait(3599)).toBe(tf("offers.wait.minutes", { n: 60 }));
+    expect(formatWait(3540)).toBe(tf("offers.wait.minutes", { n: 59 }));
+    expect(formatWait(3599)).toBe(t("offers.wait.hour"));
     expect(formatWait(3600)).toBe(t("offers.wait.hour"));
     expect(formatWait(3601)).toBe(tf("offers.wait.hours", { n: 2 }));
     expect(formatWait(86400)).toBe(tf("offers.wait.hours", { n: 24 }));
@@ -54,6 +55,12 @@ describe("empresa y lugar (CA3, AP9)", () => {
     expect(placeOf({ state: GUATEMALA, city: MIXCO })).toBe("Mixco, Guatemala");
     expect(placeOf({ state: GUATEMALA, city: null })).toBe("Guatemala");
     expect(placeOf({ state: null, city: null })).toBe("");
+  });
+  it("los estados se nombran en español; uno fuera del contrato no rompe la página (cadena vacía)", () => {
+    expect(applicationStatusLabel("under_review")).toBe(t("applications.status.under_review"));
+    expect(externalStatusLabel("offer")).toBe(t("external.status.offer"));
+    expect(applicationStatusLabel("archivada")).toBe("");
+    expect(externalStatusLabel("hired")).toBe("");
   });
   it("safeWebsite: solo enlaces http(s); un javascript: o un texto suelto no son enlaces", () => {
     expect(safeWebsite("https://cafenuevo.example")).toBe("https://cafenuevo.example/");
@@ -83,13 +90,13 @@ describe("consentimiento (AP2, AP6)", () => {
     expect(consentBody(["email", "email", "address", "match_score"], true)?.shared_fields).toEqual(["display_name", "skills", "experience", "email"]);
   });
   it("fieldAvailability: qué datos tiene la persona en su perfil (para «No tienes teléfono en tu perfil»)", () => {
-    const todo = fieldAvailability(PERFIL());
+    const todo = fieldAvailability(PERFIL() as never);
     for (const f of SHARED_FIELDS) expect(todo[f], f).toBe(true);
     const nada = fieldAvailability(PERFIL_VACIO as never);
     expect(nada).toMatchObject({ display_name: true, email: true, skills: false, experience: false, experience_descriptions: false, languages: false, education: false, profile_description: false, phone: false });
   });
   it("fieldAvailability: descripción o teléfono en blanco cuentan como que no hay; sin perfil, no se sabe", () => {
-    const blancos = fieldAvailability(PERFIL({ phone: "  ", description: "", experiences: [{ company: "A", title: "B", start_date: "2021-01-01", end_date: null, description: null }] }));
+    const blancos = fieldAvailability(PERFIL({ phone: "  ", description: "", experiences: [{ company: "A", title: "B", start_date: "2021-01-01", end_date: null, description: null }] }) as never);
     expect(blancos).toMatchObject({ phone: false, profile_description: false, experience: true, experience_descriptions: false });
     const desconocido = fieldAvailability(null);
     for (const f of SHARED_FIELDS) expect(desconocido[f], f).toBeNull();

@@ -58,7 +58,10 @@ describe("GET /api/offers", () => {
   it("no discriminación: lo que no es del contrato no se reenvía nunca (edad, género, nombre, empresa, texto)", async () => {
     const { llamadas } = stubFetch(() => jsonRes(200, paginaOfertas([])));
     await offers.GET(rq(`/api/offers?state_id=${ST_GT}&age=30&gender=f&marital_status=x&name=Ana&photo=1&q=banco&company_id=${PROF}&sort=recent`));
-    expect(llamadas[0].url).toBe(`${API}/offers?state_id=${ST_GT}&sort=recent`);
+    const u = new URL(llamadas[0].url);
+    expect(`${u.origin}${u.pathname}`).toBe(`${API}/offers`);
+    expect([...u.searchParams.keys()].sort()).toEqual(["sort", "state_id"]);
+    expect(Object.fromEntries(u.searchParams)).toEqual({ state_id: ST_GT, sort: "recent" });
   });
   for (const q of ["limit=0", "limit=51", "limit=abc", "sort=match", "sort=name", "sort=", "cursor=", `cursor=${"a".repeat(600)}`, "cursor=%3Cscript%3E", "profession_id=1", "city_id=no-es-uuid", `state_id=${ST_GT}&state_id=${PROF}`]) {
     it(`${q.slice(0, 40)} -> 422 datos_invalidos sin tocar el backend`, async () => {

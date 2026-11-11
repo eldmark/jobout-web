@@ -624,6 +624,176 @@ textarea {
   resize: vertical;
 }
 
+/* --- Ofertas y aplicaciones (Fase 5a) --- */
+.enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 0 0 1.5rem;
+}
+
+.menu {
+  list-style: none;
+  margin: 1rem 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.acciones--juntas {
+  margin-top: 0.25rem;
+}
+
+.filtros {
+  display: grid;
+  gap: 1rem;
+  margin: 0 0 2rem;
+  border: 1px solid var(--borde);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+}
+
+.filtros h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.filtros__campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.campo select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tarjeta .tarjeta__titulo {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.tarjeta .etiqueta-estado,
+.tarjeta .texto-libre,
+.tarjeta__empresa {
+  margin: 0;
+}
+
+.tarjeta__empresa {
+  font-weight: 700;
+}
+
+.ficha {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 0.5rem 1rem;
+  margin: 0.5rem 0;
+}
+
+.ficha dt {
+  font-size: 0.8125rem;
+  color: var(--tenue);
+}
+
+.ficha dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Texto escrito por otra persona (descripción de la oferta, notas): se respetan los saltos de
+   línea y una palabra larga no rompe el ancho. Siempre como texto, nunca como HTML. */
+.texto-libre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.detalle {
+  border-top: 1px solid var(--borde);
+  padding-top: 0.75rem;
+}
+
+.detalle h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.detalle ol,
+.detalle ul {
+  margin: 0.25rem 0 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.dialogo--ancho {
+  width: min(100%, 38rem);
+}
+
+.casilla {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.75rem;
+  align-items: start;
+}
+
+.casilla input[type="checkbox"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0.2rem 0 0;
+  accent-color: var(--color-indigo);
+}
+
+.casilla label {
+  cursor: pointer;
+}
+
+.casilla input:disabled + label {
+  cursor: default;
+}
+
+.casilla .campo__ayuda {
+  grid-column: 2;
+}
+
+.casilla--acepto {
+  font-weight: 700;
+  border-top: 1px solid var(--borde);
+  padding-top: 0.75rem;
+}
+
+.avisos {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.9375rem;
+}
+
+.pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--borde);
+  margin: 0 0 1.5rem;
+}
+
+.pestanas__pestana {
+  font: inherit;
+  font-weight: 700;
+  background: transparent;
+  color: var(--tenue);
+  border: 0;
+  border-bottom: 3px solid transparent;
+  padding: 0.625rem 1rem;
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+
+.pestanas__pestana[aria-selected="true"] {
+  color: var(--texto);
+  border-bottom-color: var(--acento);
+}
+
 /* Las anclas de la portada bajan con suavidad, salvo que la persona pida menos movimiento. */
 @media (prefers-reduced-motion: no-preference) {
   html {

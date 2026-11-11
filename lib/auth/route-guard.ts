@@ -7,7 +7,17 @@ export type RouteDecision = { action: "allow" } | { action: "redirect"; to: stri
 const PUBLIC_PATHS = ["/", "/sign-in", "/sign-up", "/health", "/adios"] as const;
 const PUBLIC_FOLDERS = ["/sign-in", "/sign-up", "/health", "/_next", "/api/auth"] as const;
 /** Endpoints de CV/perfil: sin sesión responden 401 JSON ellos mismos (un redirect a HTML rompería el fetch). */
-const SELF_GUARDED_FOLDERS = ["/api/cvs", "/api/profile", "/api/catalogs", "/api/recruiters", "/api/levels", "/api/progress", "/api/interviews"] as const;
+const SELF_GUARDED_FOLDERS = [
+  "/api/cvs",
+  "/api/profile",
+  "/api/catalogs",
+  "/api/recruiters",
+  "/api/levels",
+  "/api/progress",
+  "/api/interviews",
+  "/api/offers",
+  "/api/applications",
+] as const;
 const PUBLIC_FILES = ["/favicon.ico", "/robots.txt"] as const;
 
 function normalize(pathname: string): string {

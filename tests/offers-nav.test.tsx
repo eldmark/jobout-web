@@ -10,7 +10,9 @@ vi.mock("next/headers", () => ({ cookies: async () => ({ get: (n: string) => (n 
 vi.mock("next/navigation", () => ({ redirect: (to: string) => { throw new Error(`REDIRECT:${to}`); } }));
 import Dashboard from "@/app/dashboard/page";
 
-const ME = (roles?: unknown) => ({ first_name: "Ana", last_name: "Paz", plan: { code: "free", name: "Gratis" }, ...(roles === undefined ? {} : { roles, permissions: [] }) });
+const PERSONA = { first_name: "Ana", last_name: "Paz", plan: { code: "free", name: "Gratis" } };
+/** Lo que devuelve GET /me; `roles` puede venir con cualquier forma. */
+const ME = (roles: unknown) => ({ ...PERSONA, roles, permissions: [] });
 const sp = { searchParams: Promise.resolve({}) };
 const menu = () => screen.queryByRole("navigation", { name: t("dashboard.nav.label") });
 const enlaces = () => within(menu()!).getAllByRole("link").map((a) => [a.textContent, a.getAttribute("href")]);
@@ -24,23 +26,23 @@ afterEach(() => {
 
 describe("DashboardView: menú por rol", () => {
   it("un candidato ve «Ver ofertas» y «Mis aplicaciones»", () => {
-    render(<DashboardView me={{ ...ME(), roles: ["applicant"] }} />);
+    render(<DashboardView me={{ ...PERSONA, roles: ["applicant"] }} />);
     expect(enlaces()).toEqual([
       [t("dashboard.nav.offers"), "/offers"],
       [t("dashboard.nav.applications"), "/applications"],
     ]);
   });
   it("candidato y administrador de empresa a la vez: conserva el menú de candidato", () => {
-    render(<DashboardView me={{ ...ME(), roles: ["applicant", "company_admin"] }} />);
+    render(<DashboardView me={{ ...PERSONA, roles: ["applicant", "company_admin"] }} />);
     expect(enlaces().map(([, h]) => h)).toEqual(["/offers", "/applications"]);
   });
   it("sin el rol de candidato (p. ej. solo admin de plataforma) no hay menú de candidato", () => {
-    render(<DashboardView me={{ ...ME(), roles: ["admin"] }} />);
+    render(<DashboardView me={{ ...PERSONA, roles: ["admin"] }} />);
     expect(menu()).toBeNull();
     expect(screen.queryByRole("link", { name: t("dashboard.nav.offers") })).toBeNull();
   });
   it("sin roles conocidos no se inventa ninguno", () => {
-    render(<DashboardView me={ME()} />);
+    render(<DashboardView me={PERSONA} />);
     expect(menu()).toBeNull();
   });
 });
