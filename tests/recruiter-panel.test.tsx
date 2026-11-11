@@ -122,6 +122,16 @@ describe("el detalle (PA2, PA3)", () => {
     expect(d.querySelector("img, script, b")).toBeNull();
     expect(within(d).getByRole("heading", { name: t("panel.shared.contact") })).toBeInTheDocument();
   });
+  it("BUG-008: habilidades, experiencia o idiomas compartidos pero vacíos dicen que no hay datos, sin listas vacías", async () => {
+    backend({ detalle: () => jsonRes(200, DETALLE_PANEL({}, { skills: [], experience: [], languages: [] })) });
+    render(<RecruiterPanel offerId={OFF} />);
+    const d = await abrirDetalle();
+    for (const k of ["panel.shared.skills", "panel.shared.experience", "panel.shared.languages"] as const) {
+      const titulo = await within(d).findByRole("heading", { name: t(k) }, ESPERA);
+      expect(titulo.nextElementSibling, k).toHaveTextContent(t("panel.shared.empty"));
+    }
+    expect(d.querySelectorAll("ul:empty")).toHaveLength(0);
+  });
   it("429 al abrir un detalle dice cuánto esperar", async () => {
     backend({ detalle: () => new Response(JSON.stringify({ error: "demasiados_intentos" }), { status: 429, headers: { "content-type": "application/json", "retry-after": "1200" } }) });
     render(<RecruiterPanel offerId={OFF} />);
