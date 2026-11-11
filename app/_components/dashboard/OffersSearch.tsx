@@ -50,7 +50,7 @@ export default function OffersSearch({ professions, contractTypes }: { professio
           {t("dashboard.search.title")}
         </h2>
       </div>
-      <form className="buscador" role="search" aria-labelledby={`${base}-t`} onSubmit={buscar}>
+      <form method="post" className="buscador" role="search" aria-labelledby={`${base}-t`} onSubmit={buscar}>
         <div className="buscador__fila">
           <label className="solo-lectores" htmlFor={`${base}-q`}>
             {t("dashboard.search.label")}
