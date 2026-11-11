@@ -11,7 +11,7 @@ const PASOS = [
 
 export default function ComoFunciona() {
   return (
-    <section id="como-funciona" aria-labelledby="como-funciona-titulo" className="scroll-mt-20 px-6 py-24 sm:py-32">
+    <section id="como-funciona" aria-labelledby="como-funciona-titulo" className="scroll-mt-20 px-6 py-20 sm:py-28">
       <div className="mx-auto max-w-6xl">
         <Reveal>
           <Titular id="como-funciona-titulo" antetitulo={t("home.how.eyebrow")} titulo={t("home.how.title")} bajada={t("home.how.lead")} />

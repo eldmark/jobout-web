@@ -19,7 +19,7 @@ export default function Recruiters() {
     <section
       id="recruiters"
       aria-labelledby="recruiters-titulo"
-      className="scroll-mt-20 bg-lavender/45 px-6 py-24 sm:py-32 dark:bg-white/[0.03]"
+      className="scroll-mt-20 bg-lavender/45 px-6 py-20 sm:py-28 dark:bg-white/[0.03]"
     >
       <div className="mx-auto max-w-6xl">
         <Reveal>

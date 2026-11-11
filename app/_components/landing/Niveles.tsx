@@ -17,7 +17,7 @@ const k = (clave: string, campo: string) => `home.levels.${clave}.${campo}` as M
 
 export default function Niveles() {
   return (
-    <section id="niveles" aria-labelledby="niveles-titulo" className="scroll-mt-20 px-6 py-24 sm:py-32">
+    <section id="niveles" aria-labelledby="niveles-titulo" className="scroll-mt-20 px-6 py-20 sm:py-28">
       <div className="mx-auto max-w-6xl">
         <Reveal>
           <Titular id="niveles-titulo" antetitulo={t("home.levels.eyebrow")} titulo={t("home.levels.title")} bajada={t("home.levels.lead")} />

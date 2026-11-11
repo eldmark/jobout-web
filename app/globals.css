@@ -36,6 +36,15 @@
 
   --fuente-titulo: var(--font-sora), system-ui, sans-serif;
   --fuente-texto: var(--font-manrope), system-ui, sans-serif;
+
+  /* Superficies de la app: tarjetas un paso sobre la página, sombra suave con desplazamiento,
+     y una sola curva de salida para todo el movimiento. */
+  --tarjeta: color-mix(in srgb, var(--color-lavender) 38%, var(--color-white));
+  --sombra: 0 1px 2px color-mix(in srgb, var(--color-ink) 8%, transparent),
+    0 12px 28px -16px color-mix(in srgb, var(--color-indigo) 32%, transparent);
+  --realce: color-mix(in srgb, var(--color-indigo) 9%, var(--fondo));
+  --curva: cubic-bezier(0.22, 1, 0.36, 1);
+  --radio: 1rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -47,6 +56,10 @@
     --acento: var(--color-lavender);
     /* Paneles flotantes (diálogos): un paso más claro que la página para que se distingan. */
     --superficie: color-mix(in srgb, var(--color-lavender) 9%, var(--color-ink));
+    --tarjeta: color-mix(in srgb, var(--color-lavender) 6%, var(--color-ink));
+    --sombra: 0 1px 2px color-mix(in srgb, var(--color-ink) 60%, transparent),
+      0 14px 30px -18px color-mix(in srgb, var(--color-ink) 90%, transparent);
+    --realce: color-mix(in srgb, var(--color-lavender) 11%, var(--color-ink));
   }
 }
 
@@ -66,25 +79,84 @@ h2,
 h3 {
   font-family: var(--fuente-titulo);
   font-weight: 700;
+  text-wrap: balance;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-indigo) 35%, transparent);
 }
 
 .pagina {
-  max-width: 42rem;
+  max-width: 44rem;
   margin: 0 auto;
-  padding: 6rem 1.5rem;
+  padding: 2.5rem 1.25rem 5rem;
+}
+
+@media (min-width: 40rem) {
+  .pagina {
+    padding: 4.5rem 1.5rem 6rem;
+  }
 }
 
 .pagina h1 {
-  font-size: 2.5rem;
-  margin: 0 0 0.5rem;
+  font-size: clamp(1.875rem, 1.5rem + 1.8vw, 2.5rem);
+  line-height: 1.15;
+  margin: 0 0 0.75rem;
   letter-spacing: -0.02em;
   color: var(--acento);
 }
 
+/* Entre el título de página y el de sección había un salto sin escala: los h2 de sección
+   llevan su propio tamaño y más aire arriba que abajo. */
+.pagina h2 {
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+.pagina h3 {
+  font-size: 1.0625rem;
+}
+
 .eslogan {
   color: var(--tenue);
-  font-size: 1.125rem;
-  margin: 0 0 2rem;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  max-width: 60ch;
+  margin: 0 0 1.75rem;
+}
+
+.eslogan {
+  margin-bottom: 2rem;
+}
+
+/* Entrada de la página: el contenido sube un poco al cargar, una sola vez y escalonado. */
+@keyframes aparece {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pagina > * {
+    animation: aparece 0.5s var(--curva) backwards;
+  }
+
+  .pagina > :nth-child(2) {
+    animation-delay: 0.04s;
+  }
+
+  .pagina > :nth-child(3) {
+    animation-delay: 0.08s;
+  }
+
+  .pagina > :nth-child(4) {
+    animation-delay: 0.12s;
+  }
+
+  .pagina > :nth-child(n + 5) {
+    animation-delay: 0.16s;
+  }
 }
 
 /* Sobre coral el texto va SIEMPRE en tinta (blanco da 2.8:1 y no cumple). */
@@ -96,7 +168,7 @@ h3 {
   font-size: 0.875rem;
   border-radius: 999px;
   padding: 0.25rem 0.875rem;
-  margin: 0 0 1.5rem;
+  margin: 0 0 1.25rem;
 }
 
 /* En una tarjeta (display: grid) la etiqueta no se estira: mide lo que su texto. */
@@ -166,9 +238,11 @@ h3 {
 }
 
 .aviso {
-  border: 1px solid var(--borde);
-  border-radius: 0.5rem;
-  padding: 1rem 1.25rem;
+  border: 1px dashed var(--borde);
+  background: var(--tarjeta);
+  border-radius: var(--radio);
+  padding: 1.125rem 1.25rem;
+  margin: 0 0 1.25rem;
   color: var(--tenue);
   font-size: 0.9375rem;
 }
@@ -180,11 +254,24 @@ h3 {
 }
 
 .marca {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
   font-family: var(--fuente-titulo);
   font-weight: 700;
   font-size: 1.25rem;
   color: var(--acento);
-  margin: 0 0 1.5rem;
+  margin: 0 0 2rem;
+}
+
+/* La marca de la portada (dos mitades: índigo y coral) como sello de cada pantalla. */
+.marca::before {
+  content: "";
+  flex: none;
+  width: 1.625rem;
+  height: 1.625rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(90deg, var(--color-indigo) 50%, var(--color-coral) 50%);
 }
 
 .formulario {
@@ -249,15 +336,20 @@ h3 {
   font-weight: 700;
 }
 
+.campo textarea {
+  min-height: 7.5rem;
+  line-height: 1.5;
+}
+
 .formulario__error:empty {
   display: none;
 }
 
 .formulario__error {
-  border-left: 4px solid var(--color-coral);
+  border: 1.5px solid var(--color-coral);
   background: var(--color-lavender);
   color: var(--color-ink);
-  border-radius: 0.25rem;
+  border-radius: 0.75rem;
   padding: 0.75rem 1rem;
   margin: 0;
 }
@@ -312,19 +404,28 @@ a {
 
 /* Texto sobre coral SIEMPRE en tinta (regla de marca). */
 .boton {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   font: inherit;
   font-weight: 700;
   text-align: center;
   text-decoration: none;
-  border-radius: 0.75rem;
+  border-radius: 999px;
   border: 2px solid transparent;
-  padding: 0.625rem 1.25rem;
+  padding: 0.625rem 1.375rem;
   min-height: 2.75rem;
   cursor: pointer;
   transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
+    transform 0.2s var(--curva),
+    box-shadow 0.2s var(--curva),
+    background-color 0.2s var(--curva),
+    border-color 0.2s var(--curva);
+}
+
+.boton:active:not(:disabled) {
+  transform: translateY(1px) scale(0.985);
 }
 
 .boton:disabled {
@@ -358,10 +459,37 @@ a {
   border-color: var(--tenue);
 }
 
+.boton--borde:hover:not(:disabled) {
+  border-color: var(--acento);
+  background: var(--realce);
+}
+
 .boton--peligro {
   background: transparent;
   color: var(--texto);
   border-color: var(--color-coral);
+}
+
+.boton--peligro:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-coral) 14%, transparent);
+}
+
+/* El envío de un formulario es la acción principal: en el celular ocupa todo el ancho, al
+   alcance del pulgar; con ancho de sobra mide lo que su texto. */
+.formulario > .boton {
+  justify-self: start;
+}
+
+@media (max-width: 30rem) {
+  .formulario > .boton,
+  .dialogo__acciones .boton {
+    justify-self: stretch;
+    flex: 1 1 100%;
+  }
+
+  .acciones .boton {
+    flex: 1 1 auto;
+  }
 }
 
 .acciones {
@@ -371,6 +499,13 @@ a {
   margin-top: 2rem;
 }
 
+/* Cerrar sesión y borrar la cuenta cierran la pantalla, separados del contenido. */
+.pagina > .acciones:last-child {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--borde);
+}
+
 .velo {
   position: fixed;
   inset: 0;
@@ -378,6 +513,7 @@ a {
   place-items: center;
   padding: 1rem;
   background: color-mix(in srgb, var(--color-ink) 70%, transparent);
+  backdrop-filter: blur(3px);
 }
 
 .dialogo {
@@ -387,14 +523,39 @@ a {
   background: var(--superficie);
   color: var(--texto);
   border: 1px solid var(--borde);
-  border-radius: 0.75rem;
+  border-radius: 1.25rem;
   padding: 1.5rem;
   display: grid;
   gap: 1rem;
+  box-shadow: var(--sombra);
 }
 
 .dialogo h2 {
   margin: 0;
+}
+
+/* En el celular el diálogo sube desde abajo, a la altura del pulgar. */
+@media (max-width: 40rem) {
+  .velo {
+    place-items: end center;
+    padding: 0;
+  }
+
+  .dialogo {
+    width: 100%;
+    border-radius: 1.25rem 1.25rem 0 0;
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .velo {
+    animation: aparece 0.25s var(--curva);
+  }
+
+  .dialogo {
+    animation: aparece 0.35s var(--curva);
+  }
 }
 
 .dialogo__acciones {
@@ -412,7 +573,7 @@ a {
 .grupo {
   display: grid;
   gap: 1rem;
-  margin: 1rem 0;
+  margin: 2rem 0;
 }
 
 .grupo h2 {
@@ -428,11 +589,33 @@ a {
 }
 
 .tarjeta {
+  position: relative;
   border: 1px solid var(--borde);
-  border-radius: 0.5rem;
-  padding: 1rem;
+  background: var(--tarjeta);
+  border-radius: var(--radio);
+  padding: 1.25rem;
   display: grid;
   gap: 0.75rem;
+  transition:
+    border-color 0.2s var(--curva),
+    box-shadow 0.2s var(--curva);
+}
+
+.lista > .tarjeta {
+  box-shadow: var(--sombra);
+}
+
+/* Una tarjeta de oferta es un solo objetivo táctil: el enlace del título cubre toda la tarjeta.
+   Solo donde la tarjeta no tiene otros botones. */
+.tarjeta:not(:has(button)) .tarjeta__titulo a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radio);
+}
+
+.tarjeta:not(:has(button)):has(.tarjeta__titulo a):hover {
+  border-color: var(--acento);
 }
 
 .tarjeta--fila {
@@ -477,10 +660,10 @@ a {
 }
 
 .formulario__aviso {
-  border-left: 4px solid var(--color-mint);
+  border: 1.5px solid var(--color-mint);
   background: var(--color-lavender);
   color: var(--color-ink);
-  border-radius: 0.25rem;
+  border-radius: 0.75rem;
   padding: 0.75rem 1rem;
 }
 
@@ -531,13 +714,39 @@ progress {
 }
 
 .opcion {
+  position: relative;
   display: grid;
   grid-template-columns: auto 1fr;
-  column-gap: 0.75rem;
+  column-gap: 0.875rem;
   align-items: start;
-  border: 1px solid var(--borde);
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
+  border: 1.5px solid var(--borde);
+  background: var(--tarjeta);
+  border-radius: var(--radio);
+  padding: 1rem 1.125rem;
+  transition:
+    border-color 0.2s var(--curva),
+    background-color 0.2s var(--curva);
+}
+
+.opcion:hover:not([data-bloqueado="true"]) {
+  border-color: var(--tenue);
+}
+
+/* La opción elegida se ve en la tarjeta entera, no solo en el puntito del radio. */
+.opcion:has(input:checked) {
+  border-color: var(--acento);
+  background: var(--realce);
+}
+
+.opcion:has(input:focus-visible) {
+  outline: 3px solid var(--color-indigo);
+  outline-offset: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .opcion:has(input:focus-visible) {
+    outline-color: var(--color-coral);
+  }
 }
 
 .opcion input[type="radio"] {
@@ -553,8 +762,27 @@ progress {
   cursor: pointer;
 }
 
+/* Toda la tarjeta es el área táctil del radio (el input sigue siendo el control real). */
+.opcion label::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radio);
+}
+
+/* La descripción dentro de la etiqueta baja bajo el nombre: antes, al ser hija de la etiqueta,
+   caía en una segunda columna implícita y quedaba centrada al lado. */
 .opcion .campo__ayuda {
   grid-column: 2;
+}
+
+.opcion label .campo__ayuda {
+  grid-column: auto;
+}
+
+.opcion[data-bloqueado="true"] {
+  border-style: dashed;
+  background: transparent;
 }
 
 .opcion[data-bloqueado="true"] label {
@@ -563,9 +791,16 @@ progress {
 }
 
 .etiqueta-estado {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
   margin: 0 0 1rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--acento) 14%, transparent);
+  font-size: 0.875rem;
   font-weight: 700;
-  color: var(--tenue);
+  color: var(--texto);
 }
 
 .conversacion {
@@ -578,8 +813,16 @@ progress {
 
 .mensaje {
   border: 1px solid var(--borde);
-  border-radius: 0.75rem;
+  border-radius: var(--radio);
   padding: 0.75rem 1rem;
+  max-width: 92%;
+}
+
+/* La persona que responde va a la derecha y el recruiter a la izquierda, como en un chat. */
+.mensaje[data-autor="applicant"] {
+  margin-left: auto;
+  background: var(--realce);
+  border-bottom-right-radius: 0.25rem;
 }
 
 .mensaje p {
@@ -591,6 +834,7 @@ progress {
 .mensaje[data-autor="recruiter"] {
   background: var(--color-lavender);
   color: var(--color-ink);
+  border-bottom-left-radius: 0.25rem;
 }
 
 .mensaje--pendiente {
@@ -606,13 +850,22 @@ progress {
 
 .dato {
   border: 1px solid var(--borde);
-  border-radius: 0.75rem;
+  background: var(--tarjeta);
+  border-radius: var(--radio);
   padding: 1rem 1.5rem;
+  min-width: 8rem;
 }
 
 .dato dt {
   font-size: 0.875rem;
   color: var(--tenue);
+}
+
+@media (max-width: 30rem) {
+  .dato {
+    flex: 1 1 8rem;
+    padding: 0.875rem 1rem;
+  }
 }
 
 .dato dd {
@@ -630,11 +883,41 @@ progress {
   border-collapse: collapse;
 }
 
+/* Una tabla ancha se desplaza dentro de su caja en el celular, sin ensanchar la página. */
+.tabla-scroll {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--tenue) transparent;
+  margin: 0 0 1.5rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--tarjeta);
+}
+
+.tabla-scroll .tabla {
+  min-width: 34rem;
+}
+
+.tabla-scroll .tabla tr:last-child td {
+  border-bottom: 0;
+}
+
 .tabla th,
 .tabla td {
   text-align: left;
-  padding: 0.5rem 0.75rem;
+  padding: 0.75rem;
   border-bottom: 1px solid var(--borde);
+}
+
+.tabla th {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--tenue);
+  white-space: nowrap;
+}
+
+.tabla td {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Varios enlaces en una celda (BUG-005): separados por un hueco; si no caben, baja el enlace
@@ -672,9 +955,42 @@ textarea {
   list-style: none;
   margin: 1rem 0;
   padding: 0;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
   gap: 0.75rem;
+}
+
+/* El menú del panel: cada destino es una pieza táctil con su flecha, no un botón más. */
+.menu .boton {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 3.5rem;
+  padding: 0.75rem 1.125rem;
+  border-radius: var(--radio);
+  background: var(--tarjeta);
+  border: 1.5px solid var(--borde);
+  text-align: left;
+}
+
+.menu .boton:hover {
+  border-color: var(--acento);
+  background: var(--realce);
+}
+
+.menu .boton::after {
+  content: "";
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-top: 2px solid var(--tenue);
+  border-right: 2px solid var(--tenue);
+  transform: rotate(45deg);
+  transition: transform 0.2s var(--curva);
+}
+
+.menu .boton:hover::after {
+  transform: translateX(2px) rotate(45deg);
 }
 
 .acciones--juntas {
@@ -686,7 +1002,8 @@ textarea {
   gap: 1rem;
   margin: 0 0 2rem;
   border: 1px solid var(--borde);
-  border-radius: 0.75rem;
+  background: var(--tarjeta);
+  border-radius: var(--radio);
   padding: 1.25rem;
 }
 
@@ -697,7 +1014,7 @@ textarea {
 
 .filtros__campos {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
   gap: 0.75rem 1rem;
 }
 
@@ -722,6 +1039,33 @@ textarea {
 .tarjeta .tarjeta__titulo {
   margin: 0;
   font-size: 1.25rem;
+  line-height: 1.25;
+}
+
+.tarjeta__titulo a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.tarjeta__titulo a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+  text-decoration-thickness: 2px;
+}
+
+.tarjeta:has(.tarjeta__titulo a:focus-visible) {
+  outline: 3px solid var(--color-indigo);
+  outline-offset: 2px;
+}
+
+.tarjeta__titulo a:focus-visible {
+  outline: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tarjeta:has(.tarjeta__titulo a:focus-visible) {
+    outline-color: var(--color-coral);
+  }
 }
 
 .tarjeta .etiqueta-estado,
@@ -736,13 +1080,15 @@ textarea {
 
 .ficha {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
-  gap: 0.5rem 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: 0.75rem 1rem;
   margin: 0.5rem 0;
 }
 
 .ficha dt {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   color: var(--tenue);
 }
 
@@ -838,6 +1184,10 @@ textarea {
   cursor: pointer;
 }
 
+.pestanas__pestana:hover {
+  color: var(--texto);
+}
+
 .pestanas__pestana[aria-selected="true"] {
   color: var(--texto);
   border-bottom-color: var(--acento);
@@ -885,6 +1235,7 @@ textarea {
 
 .lista .tarjeta[aria-current="true"] {
   border: 2px solid var(--acento);
+  background: var(--realce);
 }
 
 /* Las anclas de la portada bajan con suavidad, salvo que la persona pida menos movimiento. */
@@ -1009,7 +1360,7 @@ textarea {
   width: 6rem;
   height: 0.5rem;
   border: 1px solid var(--acento);
-  border-radius: 0.25rem;
+  border-radius: 999px;
   overflow: hidden;
 }
 
@@ -1023,6 +1374,7 @@ textarea {
 .afinidad__barra {
   display: block;
   height: 100%;
+  border-radius: inherit;
   background: var(--acento);
 }
 
@@ -1036,8 +1388,9 @@ textarea {
 
 .afinidad__lista > li {
   border: 1px solid var(--borde);
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
+  background: var(--tarjeta);
+  border-radius: var(--radio);
+  padding: 0.875rem 1.125rem;
 }
 
 .afinidad__lista h3,
