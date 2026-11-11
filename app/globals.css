@@ -62,7 +62,9 @@
   --sombra-mint-alta: 0 2px 4px color-mix(in srgb, var(--color-ink) 10%, transparent),
     0 24px 38px -14px color-mix(in srgb, var(--color-mint) 70%, transparent);
   --tinte: 13%;
-  --brillo: 22%;
+  --brillo: 16%;
+  /* Texto secundario sobre piezas teñidas: ≥ 5:1 también bajo el destello de la esquina. */
+  --tenue-tile: color-mix(in srgb, var(--texto) 84%, var(--tarjeta));
 
   /* Grano: ruido fractal en un SVG embebido (sin imágenes externas), casi transparente. */
   --grano: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .55 -.18'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
@@ -95,7 +97,7 @@
     --sombra-mint-alta: 0 2px 4px color-mix(in srgb, var(--color-ink) 60%, transparent),
       0 24px 40px -14px color-mix(in srgb, var(--color-mint) 64%, transparent);
     --tinte: 17%;
-    --brillo: 20%;
+    --brillo: 14%;
   }
 }
 
@@ -1408,10 +1410,6 @@ textarea {
 
 /* Tarjeta con color: fondo teñido, borde y sombra del mismo color, grano suave. */
 .kpi {
-  --c: var(--color-indigo);
-  --sobre-c: var(--color-white);
-  --sombra-c: var(--sombra-indigo);
-  --sombra-c-alta: var(--sombra-indigo-alta);
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -1447,8 +1445,10 @@ textarea {
   box-shadow: var(--sombra-c-alta);
 }
 
-.kpi--ancha {
-  grid-column: span 2;
+@media (min-width: 36rem) {
+  .kpi--ancha {
+    grid-column: span 2;
+  }
 }
 
 .kpi__cabecera {
@@ -1459,10 +1459,12 @@ textarea {
 }
 
 .kpi__etiqueta {
+  flex: 1 1 0;
+  min-width: 0;
   margin: 0;
   font-weight: 700;
   font-size: 0.9375rem;
-  color: var(--tenue);
+  color: var(--tenue-tile);
 }
 
 .kpi__valor {
@@ -1480,13 +1482,13 @@ textarea {
   font-weight: 600;
   font-size: 0.9375rem;
   letter-spacing: 0;
-  color: var(--tenue);
+  color: var(--tenue-tile);
 }
 
 .kpi__nota {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--tenue);
+  color: var(--tenue-tile);
 }
 
 .kpi__cuerpo {
@@ -1530,8 +1532,14 @@ textarea {
   margin: 0 0 1.5rem;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
+}
+
+@media (min-width: 36rem) {
+  .panel-lista {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (min-width: 52rem) {
@@ -1573,7 +1581,8 @@ textarea {
 .mini-grafico {
   display: block;
   width: 100%;
-  height: 3rem;
+  height: auto;
+  max-height: 3.75rem;
   color: var(--c);
   overflow: visible;
 }
@@ -1630,7 +1639,7 @@ textarea {
   gap: 0.25rem;
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--tenue);
+  color: var(--tenue-tile);
 }
 
 .racha__punto {
@@ -1662,8 +1671,11 @@ textarea {
 /* Buscador de ofertas. */
 .buscador {
   display: grid;
-  gap: 0.875rem;
-  padding: 1.25rem;
+  gap: 0.5rem;
+}
+
+.kpi__cabecera h2 {
+  margin: 0;
 }
 
 .buscador__fila {
@@ -1690,7 +1702,7 @@ textarea {
 .buscador__ayuda {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--tenue);
+  color: var(--tenue-tile);
 }
 
 .chips {
@@ -1735,10 +1747,6 @@ textarea {
 }
 
 .atajo {
-  --c: var(--color-indigo);
-  --sobre-c: var(--color-white);
-  --sombra-c: var(--sombra-indigo);
-  --sombra-c-alta: var(--sombra-indigo-alta);
   position: relative;
   isolation: isolate;
   overflow: hidden;
