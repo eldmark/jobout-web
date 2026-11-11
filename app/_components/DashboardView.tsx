@@ -1,12 +1,15 @@
 import Link from "next/link";
 import DeleteAccount from "./DeleteAccount";
 import LogoutButton from "./LogoutButton";
+import { navFor } from "@/lib/auth/menu";
 import { t } from "@/lib/messages";
 
 export interface Me {
   first_name: string;
   last_name: string;
   plan: { code: string; name: string };
+  /** Códigos de rol de `GET /me`: eligen el menú, no autorizan nada. */
+  roles?: string[];
 }
 
 export default function DashboardView({
@@ -19,6 +22,7 @@ export default function DashboardView({
   /** Id de la entrevista en curso o en pausa, si la hay. */
   activeInterviewId?: string | null;
 }) {
+  const enlaces = me ? navFor(me.roles ?? []) : [];
   return (
     <main className="pagina">
       <p className="marca">{t("brand.name")}</p>
@@ -30,6 +34,19 @@ export default function DashboardView({
           <p className="etiqueta">
             {t("dashboard.plan")} {me.plan.name}
           </p>
+          {enlaces.length > 0 ? (
+            <nav aria-label={t("dashboard.nav.label")}>
+              <ul className="menu">
+                {enlaces.map((l) => (
+                  <li key={l.href}>
+                    <Link className="boton boton--borde" href={l.href}>
+                      {t(l.key)}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ) : null}
           <p className="aviso">{t("dashboard.empty")}</p>
           <p>
             {activeInterviewId ? (
