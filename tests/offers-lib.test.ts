@@ -144,15 +144,26 @@ describe("registro externo: validación antes de enviar", () => {
 });
 
 describe("FC6: el menú sale de los roles de /me", () => {
-  it("un candidato ve ofertas y sus aplicaciones", () => {
-    expect(navFor(["applicant"]).map((l) => l.href)).toEqual(["/offers", "/applications"]);
+  it("un candidato ve ofertas, sus aplicaciones y cómo registrar su empresa; nunca el panel", () => {
+    expect(navFor(["applicant"]).map((l) => [l.href, l.key])).toEqual([
+      ["/offers", "dashboard.nav.offers"],
+      ["/applications", "dashboard.nav.applications"],
+      ["/company", "dashboard.nav.registerCompany"],
+    ]);
   });
-  it("candidato y reclutador a la vez (decisión 10): conserva el menú de candidato; el del reclutador llega con sus páginas", () => {
-    expect(navFor(["applicant", "company_admin"]).map((l) => l.href)).toEqual(["/offers", "/applications"]);
-    expect(navFor(["applicant", "recruiter"]).map((l) => l.href)).toEqual(["/offers", "/applications"]);
+  it("candidato y reclutador a la vez (decisión 10): conserva el menú de candidato y suma el de su empresa", () => {
+    for (const rol of ["company_admin", "recruiter"]) {
+      expect(navFor(["applicant", rol]).map((l) => [l.href, l.key]), rol).toEqual([
+        ["/offers", "dashboard.nav.offers"],
+        ["/applications", "dashboard.nav.applications"],
+        ["/company", "dashboard.nav.company"],
+        ["/company/offers", "dashboard.nav.companyOffers"],
+      ]);
+    }
   });
-  it("sin el rol de candidato no hay menú de candidato; nada supone un rol", () => {
-    expect(navFor(["admin"])).toEqual([]);
+  it("el admin de plataforma ve la verificación de empresas; sin rol de candidato no hay menú de candidato; nada supone un rol", () => {
+    expect(navFor(["admin"]).map((l) => l.href)).toEqual(["/admin/companies"]);
+    expect(navFor(["applicant", "admin"]).map((l) => l.href)).toEqual(["/offers", "/applications", "/company", "/admin/companies"]);
     expect(navFor([])).toEqual([]);
   });
   it("parseRoles: solo cadenas; cualquier otra forma es una lista vacía", () => {
