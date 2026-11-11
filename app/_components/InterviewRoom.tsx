@@ -86,7 +86,7 @@ export default function InterviewRoom({ id }: { id: string }) {
   const conversando = Boolean(sesion) && status === "in_progress";
   useEffect(() => {
     if (conversando && !esperando && !dialogo && enfocar.current) {
-      campo.current?.focus();
+      campo.current?.focus({ preventScroll: true });
       enfocar.current = false;
     }
   }, [conversando, esperando, dialogo, turnos, errorEnvio]);
