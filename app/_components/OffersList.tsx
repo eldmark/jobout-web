@@ -7,11 +7,10 @@ import { applicationStatusLabel, formatDay, placeOf, publicCompany } from "@/lib
 import { isMatch } from "@/lib/offers/match";
 import { useCursorList } from "@/lib/offers/paging";
 import { OFFER_SORTS, type CatalogRef, type OfferFilter, type OfferSort, type OfferSummary } from "@/lib/offers/types";
+import { CONSULTA_INICIAL, consultaAUrl, consultaDeUrl, type ConsultaOfertas } from "@/lib/offers/url";
 import { t, tf, type MessageKey } from "@/lib/messages";
 
 const PAGINA = 20;
-
-type Filtros = Partial<Record<OfferFilter, string>>;
 
 /** Cada filtro con su catálogo y su etiqueta. El municipio depende del departamento. */
 const FILTROS: { campo: OfferFilter; catalogo: CatalogName; etiqueta: MessageKey }[] = [
@@ -29,11 +28,8 @@ const ORDEN: Record<OfferSort, MessageKey> = { recent: "offers.filters.sort.rece
 const FIJOS = FILTROS.filter((f) => f.campo !== "city_id");
 
 /** La consulta aplicada (lo que se pidió al backend), distinta de lo que se está editando en el formulario. */
-interface Consulta {
-  sort: OfferSort;
-  filtros: Filtros;
-}
-const SIN_FILTROS: Consulta = { sort: "recent", filtros: {} };
+type Consulta = ConsultaOfertas;
+const SIN_FILTROS: Consulta = CONSULTA_INICIAL;
 
 function Tarjeta({ o }: { o: OfferSummary }) {
   const empresa = publicCompany(o);
@@ -79,9 +75,9 @@ function Tarjeta({ o }: { o: OfferSummary }) {
 }
 
 /** HU-30: ofertas visibles con filtros de catálogo, afinidad (5b) y «Cargar más». Sin buscador de texto ni filtro por empresa. */
-export default function OffersList() {
-  const [consulta, setConsulta] = useState(SIN_FILTROS);
-  const [form, setForm] = useState(SIN_FILTROS);
+export default function OffersList({ initial = SIN_FILTROS }: { initial?: ConsultaOfertas }) {
+  const [consulta, setConsulta] = useState(initial);
+  const [form, setForm] = useState(initial);
   const [catalogos, setCatalogos] = useState(null as Partial<Record<CatalogName, CatalogRef[]>> | null);
   const [falloCatalogos, setFalloCatalogos] = useState(false);
   const [municipios, setMunicipios] = useState([] as CatalogRef[]);
@@ -136,14 +132,34 @@ export default function OffersList() {
     });
   }
 
+  /** La URL guarda solo orden y filtros (nunca el cursor); una entrada nueva en el historial por consulta. */
+  function escribirUrl(c: Consulta) {
+    const search = consultaAUrl(c);
+    if (search !== window.location.search) window.history.pushState(null, "", `${window.location.pathname}${search}`);
+  }
+
+  // «Atrás» / «adelante»: la consulta vuelve a ser la de la URL.
+  useEffect(() => {
+    const alVolver = () => {
+      const c = consultaDeUrl(new URLSearchParams(window.location.search));
+      setConsulta(c);
+      setForm(c);
+    };
+    window.addEventListener("popstate", alVolver);
+    return () => window.removeEventListener("popstate", alVolver);
+  }, []);
+
   function filtrar(ev: FormEvent<HTMLFormElement>) {
     ev.preventDefault();
-    setConsulta({ sort: form.sort, filtros: { ...form.filtros } });
+    const c = { sort: form.sort, filtros: { ...form.filtros } };
+    setConsulta(c);
+    escribirUrl(c);
   }
 
   function limpiar() {
     setForm(SIN_FILTROS);
     setConsulta(SIN_FILTROS);
+    escribirUrl(SIN_FILTROS);
   }
 
   const conFiltros = Object.values(consulta.filtros).some(Boolean);

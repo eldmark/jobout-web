@@ -8,6 +8,7 @@ import { goTo } from "@/lib/navigate";
 import { formatDay } from "@/lib/offers/format";
 import OffersList from "@/app/_components/OffersList";
 import { leer } from "./helpers/fuentes";
+import OffersPage from "@/app/offers/page";
 
 vi.mock("@/lib/navigate", () => ({ goTo: vi.fn() }));
 const ESPERA = { timeout: 5000 };
@@ -343,5 +344,68 @@ describe("BUG-013: los selectores de filtro caben en su celda a cualquier ancho"
   });
   it("la rejilla no usa colores a mano", () => {
     expect(regla(".filtros__campos")).not.toMatch(/#[0-9a-f]{3,8}\b|rgb\(|hsl\(/i);
+  });
+});
+
+describe("BUG-017: orden y filtros en la URL (sin cursor)", () => {
+  const ir = (url: string) => window.history.replaceState(null, "", url);
+  afterEach(() => ir("/"));
+
+  it("«Filtrar» escribe orden y filtros en la URL; «Cargar más» no la toca y el cursor nunca aparece", async () => {
+    const { llamadas } = backend({ "": paginaOfertas(ofertas(1, 2), "cur-1"), "cur-1": paginaOfertas(ofertas(3, 3)) });
+    ir("/offers");
+    render(<OffersList />);
+    await listo();
+    await opcionesListas();
+    expect(window.location.search).toBe("");
+    fireEvent.change(filtro("offers.filters.profession"), { target: { value: PROF } });
+    fireEvent.change(filtro("offers.filters.sort"), { target: { value: "match" } });
+    expect(window.location.search).toBe(""); // editar no cambia la URL hasta «Filtrar»
+    fireEvent.click(screen.getByRole("button", { name: t("offers.filters.apply") }));
+    await waitFor(() => expect(deOfertas(llamadas)).toHaveLength(2), ESPERA);
+    expect(window.location.pathname).toBe("/offers");
+    expect(Object.fromEntries(new URLSearchParams(window.location.search))).toEqual({ sort: "match", profession_id: PROF });
+    await screen.findByRole("button", { name: t("offers.more") }, ESPERA);
+    fireEvent.click(screen.getByRole("button", { name: t("offers.more") }));
+    await waitFor(() => expect(deOfertas(llamadas)).toHaveLength(3), ESPERA);
+    expect(window.location.search).not.toMatch(/cursor/);
+  });
+  it("«Quitar filtros» deja la URL limpia", async () => {
+    backend({ "": paginaOfertas([OFERTA()]) });
+    ir(`/offers?sort=oldest&profession_id=${PROF}`);
+    render(<OffersList initial={{ sort: "oldest", filtros: { profession_id: PROF } }} />);
+    await listo();
+    fireEvent.click(screen.getByRole("button", { name: t("offers.filters.clear") }));
+    expect(window.location.search).toBe("");
+    expect(window.location.pathname).toBe("/offers");
+  });
+  it("al cargar con la consulta de la URL, la primera petición ya lleva orden y filtros, y el formulario los muestra", async () => {
+    const { llamadas } = backend({ "": paginaOfertas([OFERTA()]) });
+    render(<OffersList initial={{ sort: "match", filtros: { profession_id: PROF } }} />);
+    await listo();
+    expect(deOfertas(llamadas)).toHaveLength(1);
+    expect(Object.fromEntries(consulta(deOfertas(llamadas)[0]))).toEqual({ limit: "20", sort: "match", profession_id: PROF });
+    expect(filtro("offers.filters.sort").value).toBe("match");
+    await waitFor(() => expect(filtro("offers.filters.profession").value).toBe(PROF), ESPERA);
+  });
+  it("«atrás» (popstate) vuelve a la consulta de la URL", async () => {
+    const { llamadas } = backend({ "": paginaOfertas([OFERTA()]) });
+    ir("/offers");
+    render(<OffersList />);
+    await listo();
+    ir(`/offers?sort=oldest`);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+    await waitFor(() => expect(deOfertas(llamadas)).toHaveLength(2), ESPERA);
+    expect(Object.fromEntries(consulta(deOfertas(llamadas)[1]))).toEqual({ limit: "20", sort: "oldest" });
+    expect(filtro("offers.filters.sort").value).toBe("oldest");
+  });
+});
+
+describe("BUG-017: la página lee la consulta de la URL del servidor", () => {
+  it("pasa orden y filtros al listado y descarta el cursor", async () => {
+    const { llamadas } = backend({ "": paginaOfertas([OFERTA()]) });
+    render(await OffersPage({ searchParams: Promise.resolve({ sort: "match", profession_id: PROF, cursor: "robado" }) }));
+    await listo();
+    expect(Object.fromEntries(consulta(deOfertas(llamadas)[0]))).toEqual({ limit: "20", sort: "match", profession_id: PROF });
   });
 });
