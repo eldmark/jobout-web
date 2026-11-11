@@ -1,7 +1,7 @@
 import Link from "next/link";
 import DeleteAccount from "./DeleteAccount";
 import LogoutButton from "./LogoutButton";
-import { navFor } from "@/lib/auth/menu";
+import { navFor, showsCandidateBlocks } from "@/lib/auth/menu";
 import { t } from "@/lib/messages";
 
 export interface Me {
@@ -23,6 +23,7 @@ export default function DashboardView({
   activeInterviewId?: string | null;
 }) {
   const enlaces = me ? navFor(me.roles ?? []) : [];
+  const candidato = showsCandidateBlocks(me?.roles ?? []);
   return (
     <main className="pagina">
       <p className="marca">{t("brand.name")}</p>
@@ -47,19 +48,23 @@ export default function DashboardView({
               </ul>
             </nav>
           ) : null}
-          <p className="aviso">{t("dashboard.empty")}</p>
-          <p>
-            {activeInterviewId ? (
-              <Link className="boton boton--coral" href={`/interviews/${activeInterviewId}`}>
-                {t("dashboard.resume")}
-              </Link>
-            ) : (
-              <Link className="boton boton--coral" href="/interviews">
-                {t("dashboard.practice")}
-              </Link>
-            )}
-          </p>
-          {completeProfile ? (
+          {candidato ? (
+            <>
+              <p className="aviso">{t("dashboard.empty")}</p>
+              <p>
+                {activeInterviewId ? (
+                  <Link className="boton boton--coral" href={`/interviews/${activeInterviewId}`}>
+                    {t("dashboard.resume")}
+                  </Link>
+                ) : (
+                  <Link className="boton boton--coral" href="/interviews">
+                    {t("dashboard.practice")}
+                  </Link>
+                )}
+              </p>
+            </>
+          ) : null}
+          {candidato && completeProfile ? (
             <section className="aviso aviso--accion" aria-labelledby="completa-perfil">
               <h2 id="completa-perfil">{t("dashboard.completeProfile")}</h2>
               <p>{t("dashboard.completeProfileHint")}</p>

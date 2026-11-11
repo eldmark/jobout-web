@@ -5,7 +5,7 @@ import { applicationStatusLabel, externalStatusLabel, formatDay, formatWait, pla
 import { consentBody, fieldAvailability } from "@/lib/offers/consent";
 import { fiveYearsBefore, todayLocal, toExternalInput, validateExternal } from "@/lib/offers/external";
 import { canWithdraw, MANDATORY_FIELDS, SHARED_FIELDS } from "@/lib/offers/types";
-import { navFor, parseRoles } from "@/lib/auth/menu";
+import { navFor, parseRoles, showsCandidateBlocks } from "@/lib/auth/menu";
 import { formatDate } from "@/lib/interviews/format";
 import { APLICADA, EMPRESA, GUATEMALA, MIXCO, PERFIL, PERFIL_VACIO } from "./helpers/offers";
 
@@ -163,8 +163,17 @@ describe("FC6: el menú sale de los roles de /me", () => {
   });
   it("el admin de plataforma ve la verificación de empresas; sin rol de candidato no hay menú de candidato; nada supone un rol", () => {
     expect(navFor(["admin"]).map((l) => l.href)).toEqual(["/admin/companies"]);
-    expect(navFor(["applicant", "admin"]).map((l) => l.href)).toEqual(["/offers", "/applications", "/company", "/admin/companies"]);
+    expect(navFor(["applicant", "admin"]).map((l) => l.href)).toEqual(["/offers", "/applications", "/admin/companies"]);
     expect(navFor([])).toEqual([]);
+  });
+  it("BUG-018: «Registrar mi empresa» solo para quien es candidato y no administra la plataforma ni tiene empresa", () => {
+    expect(navFor(["applicant", "admin"]).map((l) => l.key)).not.toContain("dashboard.nav.registerCompany");
+    expect(navFor(["applicant"]).map((l) => l.key)).toContain("dashboard.nav.registerCompany");
+  });
+  it("BUG-018: los bloques de candidato (práctica, perfil, progreso) solo cuando la cuenta no es de empresa ni de plataforma", () => {
+    expect(showsCandidateBlocks(["applicant"])).toBe(true);
+    expect(showsCandidateBlocks([])).toBe(true);
+    for (const rol of ["recruiter", "company_admin", "admin"]) expect(showsCandidateBlocks(["applicant", rol]), rol).toBe(false);
   });
   it("parseRoles: solo cadenas; cualquier otra forma es una lista vacía", () => {
     expect(parseRoles(["applicant", 5, null, "recruiter"])).toEqual(["applicant", "recruiter"]);

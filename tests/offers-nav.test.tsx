@@ -50,6 +50,33 @@ describe("DashboardView: menú por rol", () => {
   });
 });
 
+describe("DashboardView: bloques de candidato (BUG-018)", () => {
+  const BLOQUES = () => [
+    screen.queryByText(t("dashboard.empty")),
+    screen.queryByRole("link", { name: t("dashboard.practice") }),
+    screen.queryByRole("link", { name: t("dashboard.resume") }),
+    screen.queryByText(t("dashboard.completeProfile"), { selector: "h2" }),
+  ];
+  it.each([[["applicant", "company_admin"]], [["applicant", "recruiter"]], [["applicant", "admin"]], [["admin"]]])(
+    "con roles %j no aparecen «Practica una entrevista», «Completa tu perfil» ni «Aquí aparecerá tu progreso»",
+    (roles) => {
+      render(<DashboardView me={{ ...PERSONA, roles }} completeProfile activeInterviewId="11111111-1111-4111-8111-111111111111" />);
+      expect(BLOQUES().filter(Boolean)).toEqual([]);
+      expect(screen.getByRole("button", { name: t("account.delete.open") })).toBeInTheDocument();
+    },
+  );
+  it("un candidato sigue viendo los tres bloques", () => {
+    render(<DashboardView me={{ ...PERSONA, roles: ["applicant"] }} completeProfile />);
+    expect(screen.getByText(t("dashboard.empty"))).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: t("dashboard.practice") })).toBeInTheDocument();
+    expect(screen.getByText(t("dashboard.completeProfile"), { selector: "h2" })).toBeInTheDocument();
+  });
+  it("el administrador de plataforma no ve «Registrar mi empresa»", () => {
+    render(<DashboardView me={{ ...PERSONA, roles: ["applicant", "admin"] }} />);
+    expect(screen.queryByRole("link", { name: t("dashboard.nav.registerCompany") })).toBeNull();
+  });
+});
+
 describe("página del dashboard: los roles salen de GET /me", () => {
   const con = (me: unknown) => stubFetch((c) => (c.url.endsWith("/api/v1/me") ? jsonRes(200, me) : jsonRes(404)));
   it("con roles [applicant] muestra el menú de candidato", async () => {
