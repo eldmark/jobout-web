@@ -30,6 +30,17 @@ describe("FC7 mensajes del lado empresa", () => {
   });
 });
 
+describe("BUG-009: el 403 sin permiso no supone que la persona tiene empresa", () => {
+  // `sin_permiso` llega igual a un candidato sin empresa que abre una página de empresa y a un
+  // reclutador sin el permiso de administrador: el texto tiene que ser cierto para los dos.
+  const m = es["company.error.noPermission"];
+  it("no habla del «rol en la empresa»", () => expect(m).not.toMatch(/rol en la empresa|tu empresa/i));
+  it("dice que falta el permiso y qué hacer", () => {
+    expect(m).toMatch(/permiso/i);
+    expect(m).toMatch(/administra/i);
+  });
+});
+
 describe("«Reglas» en el código de las pantallas de empresa (SX7, OF10)", () => {
   for (const f of COMPONENTES) {
     it(`${f}: sin HTML crudo, sin almacenamiento del navegador, sin console.log, sin hex a mano`, () => {
