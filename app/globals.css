@@ -813,6 +813,50 @@ textarea {
   border-bottom-color: var(--acento);
 }
 
+/* --- Lado empresa (Fase 5a) --- */
+.subtitulo {
+  font-size: 1.125rem;
+  margin: 1rem 0 0.25rem;
+}
+
+/* El código de una invitación: se lee y se copia entero, aunque sea largo. */
+.codigo {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+/* Panel del reclutador: la lista y el detalle lado a lado cuando hay ancho; uno bajo otro si no. */
+.pagina--panel {
+  max-width: 64rem;
+}
+
+.panel {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 56rem) {
+  .panel {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    align-items: start;
+  }
+
+  .panel__detalle {
+    position: sticky;
+    top: 1rem;
+  }
+}
+
+.panel__detalle h3 {
+  font-size: 1rem;
+  margin: 1rem 0 0.25rem;
+}
+
+.lista .tarjeta[aria-current="true"] {
+  border: 2px solid var(--acento);
+}
+
 /* Las anclas de la portada bajan con suavidad, salvo que la persona pida menos movimiento. */
 @media (prefers-reduced-motion: no-preference) {
   html {

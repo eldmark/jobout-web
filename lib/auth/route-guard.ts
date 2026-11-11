@@ -17,6 +17,9 @@ const SELF_GUARDED_FOLDERS = [
   "/api/interviews",
   "/api/offers",
   "/api/applications",
+  "/api/company",
+  "/api/invitations",
+  "/api/admin",
 ] as const;
 const PUBLIC_FILES = ["/favicon.ico", "/robots.txt"] as const;
 

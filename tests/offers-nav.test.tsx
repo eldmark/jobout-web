@@ -25,20 +25,23 @@ afterEach(() => {
 });
 
 describe("DashboardView: menú por rol", () => {
-  it("un candidato ve «Ver ofertas» y «Mis aplicaciones»", () => {
+  it("un candidato ve «Ver ofertas», «Mis aplicaciones» y «Registrar mi empresa», nunca el panel", () => {
     render(<DashboardView me={{ ...PERSONA, roles: ["applicant"] }} />);
     expect(enlaces()).toEqual([
       [t("dashboard.nav.offers"), "/offers"],
       [t("dashboard.nav.applications"), "/applications"],
+      [t("dashboard.nav.registerCompany"), "/company"],
     ]);
+    expect(screen.queryByRole("link", { name: t("dashboard.nav.companyOffers") })).toBeNull();
   });
-  it("candidato y administrador de empresa a la vez: conserva el menú de candidato", () => {
+  it("candidato y administrador de empresa a la vez: conserva el menú de candidato y suma el de su empresa", () => {
     render(<DashboardView me={{ ...PERSONA, roles: ["applicant", "company_admin"] }} />);
-    expect(enlaces().map(([, h]) => h)).toEqual(["/offers", "/applications"]);
+    expect(enlaces().map(([, h]) => h)).toEqual(["/offers", "/applications", "/company", "/company/offers"]);
+    expect(screen.queryByRole("link", { name: t("dashboard.nav.registerCompany") })).toBeNull();
   });
-  it("sin el rol de candidato (p. ej. solo admin de plataforma) no hay menú de candidato", () => {
+  it("sin el rol de candidato (solo admin de plataforma) no hay menú de candidato; sí la verificación de empresas", () => {
     render(<DashboardView me={{ ...PERSONA, roles: ["admin"] }} />);
-    expect(menu()).toBeNull();
+    expect(enlaces()).toEqual([[t("dashboard.nav.adminCompanies"), "/admin/companies"]]);
     expect(screen.queryByRole("link", { name: t("dashboard.nav.offers") })).toBeNull();
   });
   it("sin roles conocidos no se inventa ninguno", () => {
@@ -52,7 +55,7 @@ describe("página del dashboard: los roles salen de GET /me", () => {
   it("con roles [applicant] muestra el menú de candidato", async () => {
     con(ME(["applicant"]));
     render(await Dashboard(sp));
-    expect(enlaces().map(([, h]) => h)).toEqual(["/offers", "/applications"]);
+    expect(enlaces().map(([, h]) => h)).toEqual(["/offers", "/applications", "/company"]);
   });
   it("roles con otra forma no rompen la página: sin menú, con el saludo", async () => {
     con(ME("applicant"));

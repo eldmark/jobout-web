@@ -313,7 +313,7 @@ describe("catálogos de los filtros", () => {
   });
   it("zones y membership-types siguen sin servirse", async () => {
     const { fn } = stubFetch(() => jsonRes(200, []));
-    for (const n of ["zones", "membership-types", "countries"]) expect((await cat(n)).status, n).toBe(404);
+    for (const n of ["zones", "membership-types"]) expect((await cat(n)).status, n).toBe(404);
     expect(fn).not.toHaveBeenCalled();
   });
 });

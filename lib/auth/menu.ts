@@ -19,8 +19,21 @@ const CANDIDATO: NavLink[] = [
   { href: "/offers", key: "dashboard.nav.offers" },
   { href: "/applications", key: "dashboard.nav.applications" },
 ];
+const EMPRESA: NavLink[] = [
+  { href: "/company", key: "dashboard.nav.company" },
+  { href: "/company/offers", key: "dashboard.nav.companyOffers" },
+];
+/** HU-50: un candidato sin empresa puede registrarla (o aceptar una invitación) en /company; no es el panel. */
+const REGISTRAR: NavLink = { href: "/company", key: "dashboard.nav.registerCompany" };
+const ADMIN: NavLink = { href: "/admin/companies", key: "dashboard.nav.adminCompanies" };
 
-/** Los enlaces del panel. Los del reclutador (`company_admin`, `recruiter`) llegan con sus páginas (paso 12). */
+/** Los enlaces del panel principal, por grupos: candidato, empresa y administración de plataforma. */
 export function navFor(roles: readonly string[]): NavLink[] {
-  return roles.includes("applicant") ? CANDIDATO : [];
+  const deEmpresa = roles.includes("company_admin") || roles.includes("recruiter");
+  const enlaces: NavLink[] = [];
+  if (roles.includes("applicant")) enlaces.push(...CANDIDATO);
+  if (deEmpresa) enlaces.push(...EMPRESA);
+  else if (roles.includes("applicant")) enlaces.push(REGISTRAR);
+  if (roles.includes("admin")) enlaces.push(ADMIN);
+  return enlaces;
 }
