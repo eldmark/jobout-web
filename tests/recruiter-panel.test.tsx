@@ -132,6 +132,23 @@ describe("el detalle (PA2, PA3)", () => {
     }
     expect(d.querySelectorAll("ul:empty")).toHaveLength(0);
   });
+  it("BUG-010: un año de experiencia en una habilidad se dice en singular", async () => {
+    backend({
+      detalle: () =>
+        jsonRes(200, DETALLE_PANEL({}, {
+          skills: [
+            { skill: { id: "s1", code: "rust", name: "Rust" }, level: "advanced", years_of_experience: 1 },
+            { skill: { id: "s2", code: "go", name: "Go" }, level: null, years_of_experience: 4 },
+          ],
+        })),
+    });
+    render(<RecruiterPanel offerId={OFF} />);
+    const d = await abrirDetalle();
+    const [rust, go] = within(d).getAllByRole("listitem").slice(0, 2);
+    expect(rust).toHaveTextContent(t("panel.skill.yearsOne"));
+    expect(rust.textContent).not.toMatch(/1 años/);
+    expect(go).toHaveTextContent(tf("panel.skill.years", { n: 4 }));
+  });
   it("429 al abrir un detalle dice cuánto esperar", async () => {
     backend({ detalle: () => new Response(JSON.stringify({ error: "demasiados_intentos" }), { status: 429, headers: { "content-type": "application/json", "retry-after": "1200" } }) });
     render(<RecruiterPanel offerId={OFF} />);
