@@ -19,7 +19,7 @@ export interface Me {
   roles?: string[];
 }
 
-const COLORES: Color[] = ["indigo", "coral", "mint"];
+const COLORES: Color[] = ["indigo"];
 const ICONO_DE: Record<string, IconName> = {
   "/offers": "offers",
   "/applications": "send",
@@ -200,24 +200,24 @@ export default function DashboardView({
             <section className="panel-seccion" aria-labelledby="panel-empresa">
               <h2 id="panel-empresa">{t("dashboard.company.title")}</h2>
               <ul className="panel-lista">
-                <Kpi id="kpi-publicadas" color="mint" icon="offers" label={t("dashboard.company.published")} index={0}>
+                <Kpi id="kpi-publicadas" color="indigo" icon="offers" label={t("dashboard.company.published")} index={0}>
                   <p className="kpi__valor">
                     <Cifra value={company.offersPublished} partial={company.partial} />
                   </p>
                 </Kpi>
-                <Kpi id="kpi-recibidas" color="indigo" icon="inbox" label={t("dashboard.company.received")} index={1}>
+                <Kpi id="kpi-recibidas" color="mint" icon="inbox" label={t("dashboard.company.received")} index={1}>
                   <p className="kpi__valor">
                     <Cifra value={company.received} partial={company.partial} />
                   </p>
                   <p className="kpi__nota">{t("dashboard.company.receivedHint")}</p>
                 </Kpi>
-                <Kpi id="kpi-ofertas" color="coral" icon="list" label={t("dashboard.company.total")} index={2}>
+                <Kpi id="kpi-ofertas" color="indigo" icon="list" label={t("dashboard.company.total")} index={2}>
                   <p className="kpi__valor">
                     <Cifra value={company.offersTotal} partial={company.partial} />
                   </p>
                 </Kpi>
                 {company.verified !== null ? (
-                  <Kpi id="kpi-verificacion" color={company.verified ? "mint" : "coral"} icon="shield" label={t("dashboard.company.verification")} index={3}>
+                  <Kpi id="kpi-verificacion" color="indigo" icon="shield" label={t("dashboard.company.verification")} index={3}>
                     <Estado color={company.verified ? "mint" : "coral"}>{company.verified ? t("dashboard.company.verified") : t("dashboard.company.unverified")}</Estado>
                     <p className="kpi__nota">{notaVerificacion(company)}</p>
                   </Kpi>
@@ -230,7 +230,7 @@ export default function DashboardView({
             <section className="panel-seccion" aria-labelledby="panel-admin">
               <h2 id="panel-admin">{t("dashboard.admin.title")}</h2>
               <ul className="panel-lista">
-                <Kpi id="kpi-pendientes" color="coral" icon="shield" label={t("dashboard.admin.pending")} index={0} wide>
+                <Kpi id="kpi-pendientes" color="indigo" icon="shield" label={t("dashboard.admin.pending")} index={0} wide>
                   <p className="kpi__valor">
                     <Cifra value={admin.pending} partial={admin.partial} />
                   </p>

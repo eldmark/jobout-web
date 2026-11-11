@@ -37,11 +37,11 @@ export default function OffersSearch({ professions, contractTypes }: { professio
 
   const atajos = [
     { key: "dashboard.search.recent" as const, href: "/offers", color: "indigo" },
-    { key: "dashboard.search.match" as const, href: `/offers${consultaAUrl({ ...CONSULTA_INICIAL, sort: "match" })}`, color: "coral" },
+    { key: "dashboard.search.match" as const, href: `/offers${consultaAUrl({ ...CONSULTA_INICIAL, sort: "match" })}`, color: "indigo" },
   ];
 
   return (
-    <section className="panel-seccion kpi c-mint" aria-labelledby={`${base}-t`}>
+    <section className="panel-seccion kpi c-indigo" aria-labelledby={`${base}-t`}>
       <div className="kpi__cabecera">
         <span className="icono-chip">
           <Icono name="search" />
@@ -97,7 +97,7 @@ export default function OffersSearch({ professions, contractTypes }: { professio
         ))}
         {contractTypes.slice(0, 3).map((c) => (
           <li key={c.id}>
-            <Link className="chip c-mint" href={`/offers${consultaAUrl({ ...CONSULTA_INICIAL, filtros: { contract_type_id: c.id } })}`}>
+            <Link className="chip c-indigo" href={`/offers${consultaAUrl({ ...CONSULTA_INICIAL, filtros: { contract_type_id: c.id } })}`}>
               {c.name}
             </Link>
           </li>

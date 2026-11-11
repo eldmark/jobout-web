@@ -33,7 +33,7 @@ export default function CandidateStats({ nowIso, ...input }: CandidateStatsProps
       <ul className="panel-lista">
         {v.showPractice ? (
           <>
-            <Kpi id="kpi-racha" color="coral" icon="flame" label={t("dashboard.streak.title")} index={i++} wide sample={v.sample}>
+            <Kpi id="kpi-racha" color="indigo" icon="flame" label={t("dashboard.streak.title")} index={i++} wide sample={v.sample}>
               <div className="racha__cuerpo">
                 <span className="llama">
                   <Icono name="flame" />
@@ -65,7 +65,7 @@ export default function CandidateStats({ nowIso, ...input }: CandidateStatsProps
                 <Ring percent={s.average ?? 0} />
               </div>
             </Kpi>
-            <Kpi id="kpi-mejor" color="mint" icon="star" label={t("dashboard.stats.best")} index={i++} sample={v.sample}>
+            <Kpi id="kpi-mejor" color="indigo" icon="star" label={t("dashboard.stats.best")} index={i++} sample={v.sample}>
               <p className="kpi__valor">
                 <CountUp value={s.best ?? 0} /> <small>{t("dashboard.stats.outOf")}</small>
               </p>
@@ -87,7 +87,7 @@ export default function CandidateStats({ nowIso, ...input }: CandidateStatsProps
           </Kpi>
         ) : null}
         {v.showCompletion ? (
-          <Kpi id="kpi-pasos" color="coral" icon="list" label={t("dashboard.completion.title")} index={i++} wide>
+          <Kpi id="kpi-pasos" color="indigo" icon="list" label={t("dashboard.completion.title")} index={i++} wide>
             <div className="kpi__cuerpo">
               <div>
                 <p className="kpi__valor">
