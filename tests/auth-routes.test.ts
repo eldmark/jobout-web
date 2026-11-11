@@ -208,6 +208,18 @@ describe("DELETE /api/account", () => {
     expect(res.status).toBe(401);
     expect(cookie(res, "jo_session")).toMatch(/Max-Age=0/);
   });
+  it("409 ultimo_administrador: se reenvía el estado y el código y la sesión NO se cierra", async () => {
+    stubFetch(() => jsonRes(409, { error: "ultimo_administrador", message: "Eres el único administrador de tu empresa." }));
+    const res = await borrarCuenta(req("/api/account", { method: "DELETE", cookie: C, body: { password: "una-clave-larga" } }));
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({ error: "ultimo_administrador" });
+    expect(cookies(res)).toEqual([]);
+  });
+  it("409 con otro código: no se inventa; sigue siendo 502", async () => {
+    stubFetch(() => jsonRes(409, { error: "otra_cosa" }));
+    const res = await borrarCuenta(req("/api/account", { method: "DELETE", cookie: C, body: { password: "una-clave-larga" } }));
+    expect(res.status).toBe(502);
+  });
   it("500 del backend: 502 y la sesión sigue", async () => {
     stubFetch(() => jsonRes(500));
     const res = await borrarCuenta(req("/api/account", { method: "DELETE", cookie: C, body: { password: "una-clave-larga" } }));

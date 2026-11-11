@@ -94,6 +94,29 @@ describe("borrar mi cuenta", () => {
     await waitFor(() => expect(within(screen.getByRole("dialog")).getByRole("alert")).toHaveTextContent(t("account.delete.failed")));
     expect(goTo).not.toHaveBeenCalled();
   });
+  it("BUG-014: 409 ultimo_administrador -> explica qué hacer y qué no se puede todavía, no el mensaje genérico", async () => {
+    stubFetch(() => jsonRes(409, { error: "ultimo_administrador" }));
+    render(<DeleteAccount />);
+    abrir();
+    escribirClave("una-clave-larga");
+    fireEvent.click(confirmar());
+    const alerta = () => within(screen.getByRole("dialog")).getByRole("alert");
+    await waitFor(() => expect(alerta()).toHaveTextContent(t("account.delete.lastAdmin")));
+    expect(alerta()).not.toHaveTextContent(t("account.delete.failed"));
+    expect(t("account.delete.lastAdmin")).toMatch(/único administrador/);
+    expect(t("account.delete.lastAdmin")).toMatch(/invita|nombra|transfiere/i);
+    expect(t("account.delete.lastAdmin")).toMatch(/todavía no|aún no/i);
+    expect(goTo).not.toHaveBeenCalled();
+    expect(confirmar()).toBeEnabled();
+  });
+  it("un 409 con otro código sigue mostrando el mensaje genérico", async () => {
+    stubFetch(() => jsonRes(409, { error: "otra_cosa" }));
+    render(<DeleteAccount />);
+    abrir();
+    escribirClave("una-clave-larga");
+    fireEvent.click(confirmar());
+    await waitFor(() => expect(within(screen.getByRole("dialog")).getByRole("alert")).toHaveTextContent(t("account.delete.failed")));
+  });
   it("F10: fallo de red -> mensaje genérico y sin navegar", async () => {
     stubFetch(() => {
       throw new TypeError("fetch failed");

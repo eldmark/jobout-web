@@ -445,6 +445,8 @@ export const es = {
   "account.delete.cancel": "Cancelar",
   "account.delete.working": "Borrando…",
   "account.delete.wrongPassword": "La contraseña no es correcta. Tu cuenta sigue activa.",
+  "account.delete.lastAdmin":
+    "Eres el único administrador de tu empresa, así que todavía no puedes borrar tu cuenta. Invita a otra persona como administradora y espera a que acepte, o quita tu rol cuando ya haya otro. Cerrar la empresa o borrarla junto con tu cuenta aún no es posible. Tu cuenta sigue activa.",
   "account.delete.failed": "No pudimos borrar tu cuenta. Sigue activa; inténtalo de nuevo.",
 
   "goodbye.title": "Tu cuenta fue borrada",
