@@ -102,26 +102,28 @@ export default function ProgressView() {
         ) : (
           <>
             <p>{evolucion(datos.serie)}</p>
-            <table className="tabla" aria-labelledby="prog-evolucion">
-              <thead>
-                <tr>
-                  <th scope="col">{t("progress.col.date")}</th>
-                  <th scope="col">{t("progress.col.level")}</th>
-                  <th scope="col">{t("progress.col.recruiter")}</th>
-                  <th scope="col">{t("progress.col.score")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {datos.serie.map((p) => (
-                  <tr key={p.session_id}>
-                    <td>{formatDate(p.completed_at)}</td>
-                    <td>{p.level}</td>
-                    <td>{p.recruiter}</td>
-                    <td>{p.score}</td>
+            <div className="tabla-scroll" role="region" tabIndex={0} aria-labelledby="prog-evolucion">
+              <table className="tabla" aria-labelledby="prog-evolucion">
+                <thead>
+                  <tr>
+                    <th scope="col">{t("progress.col.date")}</th>
+                    <th scope="col">{t("progress.col.level")}</th>
+                    <th scope="col">{t("progress.col.recruiter")}</th>
+                    <th scope="col">{t("progress.col.score")}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {datos.serie.map((p) => (
+                    <tr key={p.session_id}>
+                      <td>{formatDate(p.completed_at)}</td>
+                      <td>{p.level}</td>
+                      <td>{p.recruiter}</td>
+                      <td>{p.score}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <p>
               <Link className="boton boton--coral" href="/interviews">
                 {t("progress.cta")}

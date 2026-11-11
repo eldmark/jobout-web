@@ -131,45 +131,47 @@ export default function InterviewSessions() {
       <p className="solo-lectores" role="status">
         {filas.length === 1 ? t("interview.sessions.shownOne") : tf("interview.sessions.shown", { n: filas.length })}
       </p>
-      <table className="tabla" ref={tabla} aria-label={t("interview.sessions.title")}>
-        <thead>
-          <tr>
-            <th scope="col">{t("interview.sessions.col.date")}</th>
-            <th scope="col">{t("interview.sessions.col.level")}</th>
-            <th scope="col">{t("interview.sessions.col.recruiter")}</th>
-            <th scope="col">{t("interview.sessions.col.status")}</th>
-            <th scope="col">{t("interview.sessions.col.score")}</th>
-            <th scope="col">{t("interview.sessions.col.actions")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filas.map((s) => {
-            const fecha = formatDate(s.created_at);
-            const enlaces = acciones(s);
-            return (
-              <tr key={s.id}>
-                <td>{fecha}</td>
-                <td>{s.level.name}</td>
-                <td>{s.recruiter.display_name}</td>
-                <td>{ESTADO[s.status]()}</td>
-                <td>{s.score === null || s.score === undefined ? t("interview.sessions.noScore") : s.score}</td>
-                <td>
-                  {/* BUG-005: sin contenedor, los enlaces salían pegados («Ver resultadoVer transcripción»). */}
-                  {enlaces.length > 0 ? (
-                    <div className="tabla__acciones">
-                      {enlaces.map((a) => (
-                        <Link key={a.href} href={a.href} aria-label={tf("interview.sessions.actionLabel", { action: a.texto, level: s.level.name, recruiter: s.recruiter.display_name, date: fecha })}>
-                          {a.texto}
-                        </Link>
-                      ))}
-                    </div>
-                  ) : null}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <div className="tabla-scroll" role="region" tabIndex={0} aria-label={t("interview.sessions.title")}>
+        <table className="tabla" ref={tabla} aria-label={t("interview.sessions.title")}>
+          <thead>
+            <tr>
+              <th scope="col">{t("interview.sessions.col.date")}</th>
+              <th scope="col">{t("interview.sessions.col.level")}</th>
+              <th scope="col">{t("interview.sessions.col.recruiter")}</th>
+              <th scope="col">{t("interview.sessions.col.status")}</th>
+              <th scope="col">{t("interview.sessions.col.score")}</th>
+              <th scope="col">{t("interview.sessions.col.actions")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filas.map((s) => {
+              const fecha = formatDate(s.created_at);
+              const enlaces = acciones(s);
+              return (
+                <tr key={s.id}>
+                  <td>{fecha}</td>
+                  <td>{s.level.name}</td>
+                  <td>{s.recruiter.display_name}</td>
+                  <td>{ESTADO[s.status]()}</td>
+                  <td>{s.score === null || s.score === undefined ? t("interview.sessions.noScore") : s.score}</td>
+                  <td>
+                    {/* BUG-005: sin contenedor, los enlaces salían pegados («Ver resultadoVer transcripción»). */}
+                    {enlaces.length > 0 ? (
+                      <div className="tabla__acciones">
+                        {enlaces.map((a) => (
+                          <Link key={a.href} href={a.href} aria-label={tf("interview.sessions.actionLabel", { action: a.texto, level: s.level.name, recruiter: s.recruiter.display_name, date: fecha })}>
+                            {a.texto}
+                          </Link>
+                        ))}
+                      </div>
+                    ) : null}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
       {falloMas ? (
         <p className="formulario__error" role="alert">
           {t("interview.sessions.moreError")}
