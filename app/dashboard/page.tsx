@@ -4,28 +4,10 @@ import DashboardView, { type Me } from "@/app/_components/DashboardView";
 import { ME_PATH } from "@/lib/api/client";
 import { SESSION_COOKIE } from "@/lib/auth/cookies";
 import { backendUrl } from "@/lib/auth/server";
-import { parseRoles } from "@/lib/auth/menu";
+import { parseRoles, showsCandidateBlocks } from "@/lib/auth/menu";
+import { loadAdmin, loadCandidate, loadCompany, needsProfile } from "@/lib/dashboard/data";
 
 export const dynamic = "force-dynamic";
-
-/** true solo si SABEMOS que no hay CV ni skills; ante cualquier duda no se molesta a la persona. */
-async function needsProfile(access: string): Promise<boolean> {
-  try {
-    const headers = { authorization: `Bearer ${access}` };
-    const base = `${backendUrl()}/api/v1`;
-    const [cvs, perfil] = await Promise.all([
-      fetch(`${base}/cvs`, { headers, cache: "no-store" }),
-      fetch(`${base}/profile`, { headers, cache: "no-store" }),
-    ]);
-    if (!cvs.ok || !perfil.ok) return false;
-    const listaCvs: unknown = await cvs.json().catch(() => null);
-    const datos: { skills?: unknown } | null = await perfil.json().catch(() => null);
-    if (!Array.isArray(listaCvs) || !datos || !Array.isArray(datos.skills)) return false;
-    return listaCvs.length === 0 && datos.skills.length === 0;
-  } catch {
-    return false;
-  }
-}
 
 /** Id de la primera sesión con ese estado (el backend filtra por `status`); null ante cualquier duda. */
 async function firstWithStatus(access: string, status: "in_progress" | "paused"): Promise<string | null> {
@@ -76,6 +58,17 @@ export default async function Dashboard({
     // Los roles eligen el menú (FC6); con otra forma, ninguno: nunca se inventa un rol.
     if (data && typeof data.first_name === "string" && data.plan) me = { ...(data as Me), roles: parseRoles(data.roles) };
   }
-  const [completeProfile, activeInterviewId] = me ? await Promise.all([needsProfile(access), activeInterview(access)]) : [false, null];
-  return <DashboardView me={me} completeProfile={completeProfile} activeInterviewId={activeInterviewId} />;
+  const roles = me?.roles ?? [];
+  const candidato = showsCandidateBlocks(roles);
+  const deEmpresa = roles.includes("company_admin") || roles.includes("recruiter");
+  const [candidate, activeInterviewId, company, admin] = me
+    ? await Promise.all([
+        candidato ? loadCandidate(access) : null,
+        candidato ? activeInterview(access) : null,
+        deEmpresa ? loadCompany(access) : null,
+        roles.includes("admin") ? loadAdmin(access) : null,
+      ])
+    : [null, null, null, null];
+  const completeProfile = candidate ? needsProfile(candidate) : false;
+  return <DashboardView me={me} completeProfile={completeProfile} activeInterviewId={activeInterviewId} candidate={candidate} company={company} admin={admin} nowIso={new Date().toISOString()} />;
 }
