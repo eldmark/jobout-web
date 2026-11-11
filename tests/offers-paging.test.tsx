@@ -8,8 +8,8 @@ import type { Page } from "@/lib/offers/types";
 afterEach(cleanup);
 
 type Item = { id: string };
-const ok = (ids: string[], next: string | null = null): Result<Page<Item>> => ({ status: 200, data: { items: ids.map((id) => ({ id })), next_cursor: next }, error: null, applicationId: null, currentStatus: null, retryAfter: null });
-const falla = (status: number): Result<Page<Item>> => ({ status, data: null, error: null, applicationId: null, currentStatus: null, retryAfter: null });
+const ok = (ids: string[], next: string | null = null): Result<Page<Item>> => ({ status: 200, data: { items: ids.map((id) => ({ id })), next_cursor: next }, error: null, applicationId: null, currentStatus: null, retryAfter: null, fields: null });
+const falla = (status: number): Result<Page<Item>> => ({ status, data: null, error: null, applicationId: null, currentStatus: null, retryAfter: null, fields: null });
 const ids = (xs: Item[]) => xs.map((x) => x.id);
 
 describe("appendUnique", () => {

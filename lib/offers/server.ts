@@ -41,7 +41,7 @@ function reenviar(request: Request, o: { method: string; path: string; body?: un
 }
 
 /** Copia a `salida` limit (1–50), cursor y, si se pasa la lista, status. null = algo no es válido. */
-function paginacion(entrada: URLSearchParams, salida: URLSearchParams, estados?: readonly string[]): URLSearchParams | null {
+export function paginacion(entrada: URLSearchParams, salida: URLSearchParams, estados?: readonly string[]): URLSearchParams | null {
   const limit = entrada.get("limit");
   if (limit !== null) {
     if (!/^\d{1,2}$/.test(limit) || Number(limit) < 1 || Number(limit) > 50) return null;
@@ -62,7 +62,7 @@ function paginacion(entrada: URLSearchParams, salida: URLSearchParams, estados?:
   return salida;
 }
 
-const conQuery = (path: string, q: URLSearchParams) => (q.toString() ? `${path}?${q}` : path);
+export const conQuery = (path: string, q: URLSearchParams) => (q.toString() ? `${path}?${q}` : path);
 
 /**
  * `GET /offers`: solo limit, cursor, sort y los ocho filtros (ids de catálogo, una vez cada uno).

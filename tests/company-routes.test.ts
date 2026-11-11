@@ -281,7 +281,7 @@ describe("administración de plataforma", () => {
     const m = { membership_type: "business", start_date: "2026-11-01", expiration_date: "2027-11-01" };
     expect((await membership.PUT(rq("/x", "PUT", { ...m, company_id: "x" }), ctx(CID))).status).toBe(204);
     expect(llamadas.map((c) => [c.method, ruta(c.url)])).toEqual([
-      ["GET", "/admin/companies?verified=false&limit=20"],
+      ["GET", "/admin/companies?limit=20&verified=false"],
       ["POST", `/admin/companies/${CID}/verify`],
       ["POST", `/admin/companies/${CID}/unverify`],
       ["PUT", `/admin/companies/${CID}/membership`],

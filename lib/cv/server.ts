@@ -20,6 +20,8 @@ export const CATALOGOS = [
   "salary-ranges",
   "working-shifts",
   "employment-sectors",
+  "countries",
+  "driver-licenses",
 ] as const;
 
 const CODIGOS_POR_ESTADO: Record<number, string> = {
@@ -47,6 +49,8 @@ interface Opciones {
   /** Campos de texto del cuerpo de error que se conservan, cada uno con el formato que debe cumplir
    * (p. ej. `session_id` UUID, `renews_at` fecha ISO). Lo que no cumple o no está listado se descarta. */
   echo?: Record<string, RegExp>;
+  /** Campos de lista del cuerpo de error que se conservan: solo los nombres de la lista (p. ej. `fields`). */
+  echoList?: Record<string, readonly string[]>;
 }
 
 export async function forward(request: Request, o: Opciones): Promise<Response> {
@@ -99,10 +103,14 @@ export async function forward(request: Request, o: Opciones): Promise<Response> 
     const data = (await res.json().catch(() => null)) as Record<string, unknown> | null;
     const codigo = data?.error;
     if (typeof codigo === "string" && lista.includes(codigo)) {
-      const extra: Record<string, string> = {};
+      const extra: Record<string, string | string[]> = {};
       for (const [campo, formato] of Object.entries(o.echo ?? {})) {
         const v = data?.[campo];
         if (typeof v === "string" && formato.test(v)) extra[campo] = v;
+      }
+      for (const [campo, permitidos] of Object.entries(o.echoList ?? {})) {
+        const v = data?.[campo];
+        if (Array.isArray(v)) extra[campo] = v.filter((x): x is string => typeof x === "string" && permitidos.includes(x));
       }
       if (Object.keys(extra).length === 0) return errorJson(res.status, codigo, h);
       h.set("content-type", "application/json");

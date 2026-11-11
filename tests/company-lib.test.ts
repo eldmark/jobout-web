@@ -15,6 +15,7 @@ import {
   missingToPublish,
   nextStatuses,
   offerActions,
+  offerStatusLabel,
   toOfferInput,
   validateCompany,
   validateMembership,
@@ -80,6 +81,10 @@ describe("ofertas: publicar, congelar y acciones (OF5, OF6, OF7)", () => {
   it("frozenFields: «confidencial» queda fijo desde la primera publicación, aunque no haya aplicaciones", () => {
     const f = frozenFields(detalle({ status: "paused", publication_date: "2026-11-12" }));
     expect([...f]).toEqual(["is_confidential"]);
+  });
+  it("offerStatusLabel: el estado de una oferta en español; uno fuera del contrato no rompe la página", () => {
+    expect(offerStatusLabel("paused")).toBe(t("companyOffers.status.paused"));
+    expect(offerStatusLabel("archivada")).toBe("");
   });
   it("offerActions: publicar desde borrador o pausada; pausar publicada; cerrar publicada o pausada; borrar solo un borrador sin aplicaciones", () => {
     expect(offerActions(detalle({ status: "draft" }))).toEqual({ publish: true, pause: false, close: false, remove: true });
@@ -221,7 +226,8 @@ describe("FC7/FC8: errores del lado empresa en español, sin texto técnico", ()
   it("ningún mensaje de error muestra códigos, estados HTTP ni jerga técnica", () => {
     const tecnico = /\b(40[0-9]|42[0-9]|50[0-9]|http|json|api|null|undefined|status|uuid|id)\b|_/i;
     for (const [k, v] of Object.entries(es)) {
-      if (/^(company|panel|admin|offerForm|companyForm|companyOffers)\.(error|.*\.error)/.test(k) || /^(company|panel|admin|offerForm|companyForm|companyOffers)\..*(failed|loadError|moreError)$/.test(k)) expect(v, k).not.toMatch(tecnico);
+      // Los marcadores `{nombre}` no se muestran: se reemplazan por el valor.
+      if (/^(company|panel|admin|offerForm|companyForm|companyOffers)\.(error|.*\.error)/.test(k) || /^(company|panel|admin|offerForm|companyForm|companyOffers)\..*(failed|loadError|moreError)$/.test(k)) expect(v.replace(/\{\w+\}/g, ""), k).not.toMatch(tecnico);
     }
   });
 });

@@ -29,12 +29,17 @@ export interface Result<T> {
   currentStatus: ApplicationStatus | null;
   /** `Retry-After` de un 429, en segundos. */
   retryAfter: number | null;
+  /** Lo que falta para publicar en un 422 oferta_incompleta (lado empresa). */
+  fields: string[] | null;
 }
 
-const vacio = { data: null, error: null, applicationId: null, currentStatus: null, retryAfter: null };
+const vacio = { data: null, error: null, applicationId: null, currentStatus: null, retryAfter: null, fields: null };
 
-/** Mismo comportamiento que el cliente de entrevistas: 401 -> /sign-in, fallo de red = status 0. */
-async function call<T>(url: string, method = "GET", json?: unknown): Promise<Result<T>> {
+/**
+ * Mismo comportamiento que el cliente de entrevistas: 401 -> /sign-in, fallo de red = status 0. Lo
+ * comparten las pantallas de la Fase 5a (candidato y empresa).
+ */
+export async function call<T>(url: string, method = "GET", json?: unknown): Promise<Result<T>> {
   let res: Response;
   try {
     res = await fetch(url, {
@@ -54,7 +59,7 @@ async function call<T>(url: string, method = "GET", json?: unknown): Promise<Res
     cuerpo = null;
   }
   if (res.status >= 200 && res.status < 300) return { status: res.status, ...vacio, data: (cuerpo as T) ?? null };
-  const o = (cuerpo ?? {}) as { error?: unknown; application_id?: unknown; status?: unknown };
+  const o = (cuerpo ?? {}) as { error?: unknown; application_id?: unknown; status?: unknown; fields?: unknown };
   const espera = res.headers.get("retry-after");
   return {
     status: res.status,
@@ -63,6 +68,7 @@ async function call<T>(url: string, method = "GET", json?: unknown): Promise<Res
     applicationId: typeof o.application_id === "string" ? o.application_id : null,
     currentStatus: typeof o.status === "string" && (APPLICATION_STATUSES as readonly string[]).includes(o.status) ? (o.status as ApplicationStatus) : null,
     retryAfter: espera && /^\d{1,6}$/.test(espera) ? Number(espera) : null,
+    fields: Array.isArray(o.fields) ? o.fields.filter((f): f is string => typeof f === "string") : null,
   };
 }
 
@@ -81,7 +87,7 @@ export function offerQuery(q: OfferQuery): string {
   return texto ? `?${texto}` : "";
 }
 
-function listQuery<S extends string>(p: ListParams<S>): string {
+export function listQuery<S extends string>(p: ListParams<S>): string {
   const q = new URLSearchParams();
   if (p.limit !== undefined) q.set("limit", String(p.limit));
   if (p.cursor !== undefined) q.set("cursor", p.cursor);
@@ -90,7 +96,20 @@ function listQuery<S extends string>(p: ListParams<S>): string {
   return s ? `?${s}` : "";
 }
 
-export type CatalogName = "professions" | "states" | "cities" | "contract-types" | "salary-ranges" | "working-shifts" | "employment-sectors" | "job-hierarchies";
+export type CatalogName =
+  | "professions"
+  | "states"
+  | "cities"
+  | "contract-types"
+  | "salary-ranges"
+  | "working-shifts"
+  | "employment-sectors"
+  | "job-hierarchies"
+  | "countries"
+  | "driver-licenses"
+  | "skills"
+  | "languages"
+  | "academic-levels";
 
 export const offersApi = {
   list: (q: OfferQuery = {}) => call<Page<OfferSummary>>(`/api/offers${offerQuery(q)}`),

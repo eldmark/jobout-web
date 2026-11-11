@@ -30,7 +30,11 @@ function backend(extra: M = () => undefined) {
   });
 }
 const listo = () => screen.findByRole("list", { name: t("admin.listLabel") }, ESPERA);
-const filas = () => within(screen.getByRole("list", { name: t("admin.listLabel") })).queryAllByRole("listitem");
+/** Las filas de la lista; sin filas, la lista no se pinta (se ve el vacío). */
+const filas = () => {
+  const lista = screen.queryByRole("list", { name: t("admin.listLabel") });
+  return lista ? within(lista).queryAllByRole("listitem") : [];
+};
 const escritos = (ll: Llamada[]) => ll.filter((c) => c.method !== "GET");
 const accion = (k: Parameters<typeof t>[0]) => screen.getByRole("button", { name: tf("admin.actionLabel", { action: t(k), name: "Café Nuevo S.A." }) });
 

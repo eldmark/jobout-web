@@ -214,11 +214,12 @@ describe("publicar, pausar, cerrar y borrar (OF5, OF6, FC8)", () => {
   });
   it("«Publicar» deshabilitado con el motivo: empresa sin verificar o membresía vencida (FC8)", async () => {
     await existente({ empresa: EMPRESA({ verified: false, verified_at: null }) });
-    expect(boton("offerForm.publish")).toBeDisabled();
+    // El estado de la empresa llega en paralelo con la oferta.
+    await waitFor(() => expect(boton("offerForm.publish")).toBeDisabled(), ESPERA);
     expect(boton("offerForm.publish")).toHaveAccessibleDescription(t("company.gate.unverified.short"));
     cleanup();
     await existente({ empresa: EMPRESA({ membership: { type: "business", start_date: "2025-01-01", expiration_date: "2025-12-31", status: "expired" } }) });
-    expect(boton("offerForm.publish")).toHaveAccessibleDescription(t("company.gate.expired.short"));
+    await waitFor(() => expect(boton("offerForm.publish")).toHaveAccessibleDescription(t("company.gate.expired.short")), ESPERA);
   });
   it("con cambios sin guardar, «Publicar» pide guardar primero", async () => {
     await existente();
