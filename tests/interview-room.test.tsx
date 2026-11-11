@@ -119,6 +119,24 @@ describe("F3/F4 la conversación", () => {
   });
 });
 
+describe("avatar del entrevistador", () => {
+  const estadoAvatar = () => document.querySelector(".avatar")?.getAttribute("data-state");
+  it("es decorativo (aria-hidden) y habla la pregunta inicial al entrar", async () => {
+    await abrir();
+    expect(document.querySelector(".avatar canvas")).toHaveAttribute("aria-hidden", "true");
+    expect(estadoAvatar()).toBe("speaking");
+  });
+  it("piensa mientras se espera al recruiter y habla cuando llega su turno", async () => {
+    let soltar: (r: Response) => void = () => {};
+    await abrir((c) => (c.method === "POST" && c.url.endsWith("/turns") ? new Promise<Response>((r) => (soltar = r)) : undefined));
+    escribir("Hice una API de pagos");
+    fireEvent.click(enviarBtn());
+    await waitFor(() => expect(estadoAvatar()).toBe("thinking"), ESPERA);
+    soltar(jsonRes(201, RESPUESTA));
+    await waitFor(() => expect(estadoAvatar()).toBe("speaking"), ESPERA);
+  });
+});
+
 describe("F5 enviar", () => {
   it("con el botón: POST {text}, el campo se vacía y se deshabilita mientras espera, y se habilita al volver", async () => {
     let soltar: (r: Response) => void = () => {};

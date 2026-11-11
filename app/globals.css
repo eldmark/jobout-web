@@ -820,3 +820,93 @@ textarea {
   }
 }
 } /* fin de @layer legacy */
+
+/* Entrevistador animado (decorativo; la transcripción es la fuente accesible). */
+.avatar {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  margin: 0 0 1rem;
+  border-radius: 1rem;
+  background: var(--color-lavender);
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .avatar {
+    height: 240px;
+  }
+}
+
+.avatar__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.avatar__canvas[hidden] {
+  display: none;
+}
+
+.avatar__fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.avatar__initials {
+  display: grid;
+  place-items: center;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  background: var(--avatar-shirt, #7c6cf0);
+  color: #fff;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.avatar__dots {
+  position: absolute;
+  top: 0.75rem;
+  display: none;
+  gap: 0.35rem;
+}
+
+.avatar[data-state="thinking"] .avatar__dots {
+  display: flex;
+}
+
+.avatar__dots i {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--color-ink, #26202e);
+  animation: avatar-bounce 0.9s ease-in-out infinite;
+}
+
+.avatar__dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.avatar__dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.avatar[data-state="speaking"] .avatar__initials {
+  animation: avatar-bounce 0.45s ease-in-out infinite;
+}
+
+@keyframes avatar-bounce {
+  50% {
+    transform: translateY(-0.4rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar__dots i,
+  .avatar[data-state="speaking"] .avatar__initials {
+    animation: none;
+  }
+}
