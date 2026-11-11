@@ -80,8 +80,7 @@ describe("borrar mi cuenta", () => {
     abrir();
     escribirClave("mala-mala-mala");
     fireEvent.click(confirmar());
-    const alerta = await within(screen.getByRole("dialog")).findByRole("alert");
-    expect(alerta).toHaveTextContent(t("account.delete.wrongPassword"));
+    await waitFor(() => expect(within(screen.getByRole("dialog")).getByRole("alert")).toHaveTextContent(t("account.delete.wrongPassword")));
     expect(goTo).not.toHaveBeenCalled();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(confirmar()).toBeEnabled(); // puede reintentar
@@ -92,7 +91,7 @@ describe("borrar mi cuenta", () => {
     abrir();
     escribirClave("una-clave-larga");
     fireEvent.click(confirmar());
-    expect(await within(screen.getByRole("dialog")).findByRole("alert")).toHaveTextContent(t("account.delete.failed"));
+    await waitFor(() => expect(within(screen.getByRole("dialog")).getByRole("alert")).toHaveTextContent(t("account.delete.failed")));
     expect(goTo).not.toHaveBeenCalled();
   });
   it("F10: fallo de red -> mensaje genérico y sin navegar", async () => {
@@ -103,7 +102,7 @@ describe("borrar mi cuenta", () => {
     abrir();
     escribirClave("una-clave-larga");
     fireEvent.click(confirmar());
-    expect(await within(screen.getByRole("dialog")).findByRole("alert")).toHaveTextContent(t("account.delete.failed"));
+    await waitFor(() => expect(within(screen.getByRole("dialog")).getByRole("alert")).toHaveTextContent(t("account.delete.failed")));
     expect(goTo).not.toHaveBeenCalled();
   });
 });
