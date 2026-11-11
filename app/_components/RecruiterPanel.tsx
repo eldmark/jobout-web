@@ -40,44 +40,56 @@ function Compartido({ a }: { a: SharedApplicant }) {
       {a.skills ? (
         <>
           <h3>{t("panel.shared.skills")}</h3>
-          <ul>
-            {a.skills.map((s) => (
-              <li key={s.skill.id}>
-                {s.skill.name}
-                {s.level ? `${" · "}${t(`form.level.${s.level}`)}` : null}
-                {s.years_of_experience !== null && s.years_of_experience !== undefined ? `${" · "}${tf("panel.skill.years", { n: s.years_of_experience })}` : null}
-              </li>
-            ))}
-          </ul>
+          {a.skills.length === 0 ? (
+            <p>{t("panel.shared.empty")}</p>
+          ) : (
+            <ul>
+              {a.skills.map((s) => (
+                <li key={s.skill.id}>
+                  {s.skill.name}
+                  {s.level ? `${" · "}${t(`form.level.${s.level}`)}` : null}
+                  {s.years_of_experience !== null && s.years_of_experience !== undefined ? `${" · "}${tf("panel.skill.years", { n: s.years_of_experience })}` : null}
+                </li>
+              ))}
+            </ul>
+          )}
         </>
       ) : null}
       {a.experience ? (
         <>
           <h3>{t("panel.shared.experience")}</h3>
-          <ul>
-            {a.experience.map((e, i) => (
-              <li key={`${e.company}-${i}`}>
-                {e.end_date
-                  ? tf("panel.experience.line", { title: e.title, company: e.company, start: formatDay(e.start_date), end: formatDay(e.end_date) })
-                  : tf("panel.experience.lineCurrent", { title: e.title, company: e.company, start: formatDay(e.start_date) })}
-                {e.description ? <p className="texto-libre">{e.description}</p> : null}
-              </li>
-            ))}
-          </ul>
+          {a.experience.length === 0 ? (
+            <p>{t("panel.shared.empty")}</p>
+          ) : (
+            <ul>
+              {a.experience.map((e, i) => (
+                <li key={`${e.company}-${i}`}>
+                  {e.end_date
+                    ? tf("panel.experience.line", { title: e.title, company: e.company, start: formatDay(e.start_date), end: formatDay(e.end_date) })
+                    : tf("panel.experience.lineCurrent", { title: e.title, company: e.company, start: formatDay(e.start_date) })}
+                  {e.description ? <p className="texto-libre">{e.description}</p> : null}
+                </li>
+              ))}
+            </ul>
+          )}
         </>
       ) : null}
       {a.languages ? (
         <>
           <h3>{t("panel.shared.languages")}</h3>
-          <ul>
-            {a.languages.map((l) => (
-              <li key={l.language.id}>
-                {l.language.name}
-                {" · "}
-                {t(`form.proficiency.${l.proficiency}`)}
-              </li>
-            ))}
-          </ul>
+          {a.languages.length === 0 ? (
+            <p>{t("panel.shared.empty")}</p>
+          ) : (
+            <ul>
+              {a.languages.map((l) => (
+                <li key={l.language.id}>
+                  {l.language.name}
+                  {" · "}
+                  {t(`form.proficiency.${l.proficiency}`)}
+                </li>
+              ))}
+            </ul>
+          )}
         </>
       ) : null}
       {a.education ? (
