@@ -971,3 +971,68 @@ textarea {
     animation: none;
   }
 }
+
+/* --- Afinidad (matching, 5b): el puntaje siempre va en texto; la barra solo acompaña --- */
+.afinidad {
+  margin: 1.5rem 0;
+}
+
+.afinidad__puntaje,
+.afinidad__chip {
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.afinidad__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--texto);
+}
+
+.afinidad__pista {
+  display: inline-block;
+  width: 6rem;
+  height: 0.5rem;
+  border: 1px solid var(--acento);
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.afinidad > .afinidad__pista {
+  display: block;
+  width: 100%;
+  max-width: 20rem;
+  margin-bottom: 0.5rem;
+}
+
+.afinidad__barra {
+  display: block;
+  height: 100%;
+  background: var(--acento);
+}
+
+.afinidad__lista {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.afinidad__lista > li {
+  border: 1px solid var(--borde);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+}
+
+.afinidad__lista h3,
+.afinidad__lista h4,
+.afinidad__lista p {
+  margin: 0 0 0.25rem;
+}
+
+.afinidad__grupo {
+  font-weight: 700;
+}

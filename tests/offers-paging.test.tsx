@@ -88,4 +88,34 @@ describe("useCursorList", () => {
     await act(async () => soltar.vieja(ok(["v"])));
     expect(ids(result.current.items)).toEqual(["n"]);
   });
+  it("un 422 al pedir con cursor (cursor de otro orden) reinicia desde la primera página, sin error", async () => {
+    let reinicio = false;
+    const pagina = vi.fn(async (c?: string) => {
+      if (c === "viejo") return falla(422);
+      return reinicio ? ok(["x", "y"]) : ok(["a"], "viejo");
+    });
+    const { result } = renderHook(() => useCursorList(pagina));
+    await waitFor(() => expect(result.current.phase).toBe("ready"));
+    reinicio = true;
+    await act(() => result.current.more());
+    await waitFor(() => expect(ids(result.current.items)).toEqual(["x", "y"]));
+    expect(result.current.moreError).toBe(false);
+    expect(result.current.phase).toBe("ready");
+    expect(pagina).toHaveBeenLastCalledWith(undefined);
+  });
+  it("un 422 que persiste sin cursor es un error normal, sin bucle", async () => {
+    const pagina = vi.fn(async (c?: string) => (c ? falla(422) : ok(["a"], "c1")));
+    const { result } = renderHook(() => useCursorList(pagina));
+    await waitFor(() => expect(result.current.phase).toBe("ready"));
+    pagina.mockImplementation(async () => falla(422));
+    await act(() => result.current.more());
+    await waitFor(() => expect(result.current.phase).toBe("error"));
+    expect(pagina).toHaveBeenCalledTimes(3);
+  });
+  it("expone la primera página (sorted_by y match_unavailable) en `head`", async () => {
+    const pagina = vi.fn(async () => ({ ...ok(["a"]), data: { items: [{ id: "a" }], next_cursor: null, sorted_by: "recent", match_unavailable: "perfil_vacio" } }) as Result<Page<Item>>);
+    const { result } = renderHook(() => useCursorList(pagina));
+    await waitFor(() => expect(result.current.phase).toBe("ready"));
+    expect(result.current.head?.match_unavailable).toBe("perfil_vacio");
+  });
 });

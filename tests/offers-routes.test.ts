@@ -63,7 +63,7 @@ describe("GET /api/offers", () => {
     expect([...u.searchParams.keys()].sort()).toEqual(["sort", "state_id"]);
     expect(Object.fromEntries(u.searchParams)).toEqual({ state_id: ST_GT, sort: "recent" });
   });
-  for (const q of ["limit=0", "limit=51", "limit=abc", "sort=match", "sort=name", "sort=", "cursor=", `cursor=${"a".repeat(600)}`, "cursor=%3Cscript%3E", "profession_id=1", "city_id=no-es-uuid", `state_id=${ST_GT}&state_id=${PROF}`]) {
+  for (const q of ["limit=0", "limit=51", "limit=abc", "sort=best", "sort=name", "sort=", "cursor=", `cursor=${"a".repeat(600)}`, "cursor=%3Cscript%3E", "profession_id=1", "city_id=no-es-uuid", `state_id=${ST_GT}&state_id=${PROF}`]) {
     it(`${q.slice(0, 40)} -> 422 datos_invalidos sin tocar el backend`, async () => {
       const { fn } = stubFetch(() => jsonRes(200, paginaOfertas([])));
       const res = await offers.GET(rq(`/api/offers?${q}`));
@@ -72,6 +72,18 @@ describe("GET /api/offers", () => {
       expect(fn).not.toHaveBeenCalled();
     });
   }
+  it("sort=match se reenvía tal cual (el orden por afinidad)", async () => {
+    const { llamadas } = stubFetch(() => jsonRes(200, { items: [], next_cursor: null, sorted_by: "match", match_unavailable: null }));
+    const res = await offers.GET(rq("/api/offers?sort=match&cursor=cj_-x"));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ sorted_by: "match", match_unavailable: null });
+    expect(Object.fromEntries(new URL(llamadas[0].url).searchParams)).toEqual({ sort: "match", cursor: "cj_-x" });
+  });
+  it("un 422 del backend por cursor de otro orden llega como 422", async () => {
+    stubFetch(() => jsonRes(422, { error: "datos_invalidos" }));
+    const res = await offers.GET(rq("/api/offers?sort=match&cursor=cj_-x"));
+    expect(res.status).toBe(422);
+  });
   it("422 parametro_no_permitido del backend se conserva", async () => {
     stubFetch(() => jsonRes(422, { error: "parametro_no_permitido", message: "texto" }));
     const res = await offers.GET(rq("/api/offers"));
@@ -105,6 +117,12 @@ describe("POST /api/offers/{id}/applications (AP1, AP2)", () => {
     expect(llamadas[0]).toMatchObject({ url: `${API}/offers/${OID}/applications`, method: "POST" });
     expect(llamadas[0].body).toEqual({ consent: true, shared_fields: [...MINIMO, "email"] });
   });
+  it("5b: match_score es un nombre válido y se reenvía", async () => {
+    const { llamadas } = stubFetch(() => jsonRes(201, APLICACION_DETALLE()));
+    const res = await aplicar({ consent: true, shared_fields: [...MINIMO, "match_score"] });
+    expect(res.status).toBe(201);
+    expect(llamadas[0].body).toEqual({ consent: true, shared_fields: [...MINIMO, "match_score"] });
+  });
   for (const consent of [undefined, false, null, "true", 1, "si"]) {
     it(`AP2: consent = ${JSON.stringify(consent)} -> 422 consentimiento_requerido y el backend no se toca`, async () => {
       const { fn } = stubFetch(() => jsonRes(201, APLICACION_DETALLE()));
@@ -119,7 +137,7 @@ describe("POST /api/offers/{id}/applications (AP1, AP2)", () => {
     ["no es lista", "display_name"],
     ["sin los obligatorios", ["display_name", "skills"]],
     ["un nombre fuera del conjunto", [...MINIMO, "address"]],
-    ["un nombre de la 5b", [...MINIMO, "match_score"]],
+    ["un nombre que ni la 5b conoce", [...MINIMO, "job_matches"]],
     ["repetido", [...MINIMO, "email", "email"]],
     ["no son cadenas", [...MINIMO, 5]],
   ];

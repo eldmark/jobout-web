@@ -4,7 +4,7 @@ import { render, screen, fireEvent, cleanup, within, waitFor } from "@testing-li
 import { dobleClic } from "./helpers/doble";
 import { jsonRes, stubFetch, type Llamada } from "./helpers/backend";
 import { DETALLE_PANEL, FILA_ANONIMA, FILA_PANEL, OFERTA_DETALLE, OFF, PAP, PAP2 } from "./helpers/company";
-import { HOSTIL } from "./helpers/offers";
+import { HOSTIL, MATCH } from "./helpers/offers";
 import { t, tf } from "@/lib/messages";
 import { formatDate } from "@/lib/interviews/format";
 import { formatDay } from "@/lib/offers/format";
@@ -267,5 +267,38 @@ describe("Reglas: los datos del candidato viven solo en el estado de la página"
     await abrirDetalle();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(await detalle()).toBeInTheDocument();
+  });
+});
+
+describe("matching: la afinidad que la persona compartió", () => {
+  it("si la compartió: sección con el puntaje y el desglose, con la voz del reclutador", async () => {
+    backend({ detalle: (id) => jsonRes(200, DETALLE_PANEL({ id }, { match_score: MATCH(67) })) });
+    render(<RecruiterPanel offerId={OFF} />);
+    const d = await abrirDetalle();
+    const s = within(d).getByRole("region", { name: t("match.title.recruiter") });
+    expect(s).toHaveTextContent("Afinidad 67 %");
+    expect(s).toHaveTextContent(t("match.explain.recruiter"));
+    expect(within(s).getAllByRole("heading", { level: 4 })).toHaveLength(4);
+  });
+  it("lo no compartido dice «La persona no compartió este dato»", async () => {
+    const m = MATCH(40);
+    Object.assign((m.breakdown.components as Array<Record<string, unknown>>)[1], { applies: false, points: 0, reason: "no_compartido", matched: undefined, partial: undefined, missing: undefined });
+    backend({ detalle: (id) => jsonRes(200, DETALLE_PANEL({ id }, { match_score: m })) });
+    render(<RecruiterPanel offerId={OFF} />);
+    const d = await abrirDetalle();
+    expect(d).toHaveTextContent("La persona no compartió este dato");
+  });
+  it("si no la compartió, no aparece nada de afinidad", async () => {
+    backend();
+    render(<RecruiterPanel offerId={OFF} />);
+    const d = await abrirDetalle();
+    expect(within(d).queryByRole("region", { name: t("match.title.recruiter") })).toBeNull();
+    expect(d).not.toHaveTextContent(/Afinidad/);
+  });
+  it("sin disponibilidad (datos retirados) tampoco, aunque llegara algo", async () => {
+    backend({ filas: [FILA_ANONIMA("withdrawn")], detalle: (id) => jsonRes(200, { ...DETALLE_PANEL({ id, availability: "withdrawn" }), applicant: null }) });
+    render(<RecruiterPanel offerId={OFF} />);
+    await listo();
+    expect(screen.queryByText(/Afinidad/)).toBeNull();
   });
 });

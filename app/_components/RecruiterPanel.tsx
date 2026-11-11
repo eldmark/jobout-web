@@ -6,6 +6,8 @@ import CompanyGateNotice from "./CompanyGateNotice";
 import { companyApi } from "@/lib/company/client";
 import { companyErrorText } from "@/lib/company/errors";
 import { availabilityKey, nextStatuses, type CompanyGate } from "@/lib/company/rules";
+import MatchBreakdown from "./MatchBreakdown";
+import { isMatch } from "@/lib/offers/match";
 import { NOTE_MAX, PANEL_SORTS, type OfferDetail, type PanelApplication, type PanelRow, type PanelSort, type RecruiterTarget, type SharedApplicant } from "@/lib/company/types";
 import { countChars } from "@/lib/interviews/types";
 import { formatDate } from "@/lib/interviews/format";
@@ -123,6 +125,7 @@ function Compartido({ a }: { a: SharedApplicant }) {
           </dl>
         </>
       ) : null}
+      {isMatch(a.match_score) ? <MatchBreakdown match={a.match_score} viewer="recruiter" level={3} /> : null}
     </>
   );
 }

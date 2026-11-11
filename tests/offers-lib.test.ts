@@ -72,8 +72,8 @@ describe("empresa y lugar (CA3, AP9)", () => {
 });
 
 describe("consentimiento (AP2, AP6)", () => {
-  it("el conjunto cerrado son nueve nombres y tres obligatorios", () => {
-    expect(SHARED_FIELDS).toEqual(["display_name", "skills", "experience", "experience_descriptions", "languages", "education", "profile_description", "email", "phone"]);
+  it("el conjunto cerrado son diez nombres (el décimo, match_score, es de la 5b) y tres obligatorios", () => {
+    expect(SHARED_FIELDS).toEqual(["display_name", "skills", "experience", "experience_descriptions", "languages", "education", "profile_description", "email", "phone", "match_score"]);
     expect(MANDATORY_FIELDS).toEqual(["display_name", "skills", "experience"]);
   });
   it("sin aceptar no hay cuerpo: nunca se manda consent false ni se asume", () => {
@@ -87,7 +87,7 @@ describe("consentimiento (AP2, AP6)", () => {
     expect(consentBody([], true)).toEqual({ consent: true, shared_fields: ["display_name", "skills", "experience"] });
   });
   it("un nombre fuera del conjunto o repetido no se cuela", () => {
-    expect(consentBody(["email", "email", "address", "match_score"], true)?.shared_fields).toEqual(["display_name", "skills", "experience", "email"]);
+    expect(consentBody(["email", "email", "address", "job_matches"], true)?.shared_fields).toEqual(["display_name", "skills", "experience", "email"]);
   });
   it("fieldAvailability: qué datos tiene la persona en su perfil (para «No tienes teléfono en tu perfil»)", () => {
     const todo = fieldAvailability(PERFIL() as never);

@@ -1,7 +1,8 @@
 /**
  * Contrato de ofertas y aplicaciones para candidatos (Fase 5a): `jobout-docs/documentation/api.md`,
  * «Ofertas para candidatos», «Aplicar, ver y retirar (candidato)» y «Registro de aplicaciones
- * externas». Listados `{items, next_cursor}` con cursor opaco. Sin matching: eso es de la 5b.
+ * externas». Listados `{items, next_cursor}` con cursor opaco. El matching es de la 5b (`api.md`,
+ * «Matching (Fase 5b)»): `match` en el listado y el detalle de ofertas.
  */
 import type { Proficiency, SkillLevel } from "@/lib/cv/types";
 
@@ -26,6 +27,49 @@ export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 export const WITHDRAWABLE: readonly ApplicationStatus[] = ["applied", "under_review", "shortlisted"];
 export const canWithdraw = (s: ApplicationStatus): boolean => WITHDRAWABLE.includes(s);
 
+export const MATCH_KEYS = ["skills", "languages", "experience", "academic_level"] as const;
+export type MatchKey = (typeof MATCH_KEYS)[number];
+export type MatchReason = "no_pedido" | "no_compartido";
+
+export interface MatchSkill {
+  skill: CatalogRef;
+  required: boolean;
+  min_level?: SkillLevel | null;
+  /** Solo en `partial`; puede ser null (la persona no tiene nivel registrado). */
+  level?: SkillLevel | null;
+}
+export interface MatchLanguage {
+  language: CatalogRef;
+  min_proficiency?: Proficiency | null;
+  proficiency?: Proficiency | null;
+}
+
+/** Un componente del puntaje. Los que no aplican traen `reason` y ninguna de las listas ni los años. */
+export interface MatchComponent {
+  key: MatchKey;
+  weight: number;
+  /** A lo sumo un decimal. */
+  points: number;
+  applies: boolean;
+  reason?: MatchReason;
+  matched?: Array<MatchSkill | MatchLanguage>;
+  partial?: Array<MatchSkill | MatchLanguage>;
+  missing?: Array<MatchSkill | MatchLanguage>;
+  required_years?: number;
+  years?: number;
+}
+
+/** `{score, breakdown}` de `api.md`, «Matching»: siempre los cuatro componentes, en el orden de `MATCH_KEYS`. */
+export interface Match {
+  /** Entero 0–100. */
+  score: number;
+  breakdown: {
+    reason: null | "sin_requisitos_comparables";
+    empty_profile: boolean;
+    components: MatchComponent[];
+  };
+}
+
 export interface OfferSummary {
   id: string;
   title: string;
@@ -43,6 +87,8 @@ export interface OfferSummary {
   publication_date: string;
   /** Mi aplicación a esta oferta, o null si no apliqué. */
   my_application: { id: string; status: ApplicationStatus } | null;
+  /** El de quien llama. Se trata como opcional: si no llega o viene mal formado, no se pinta. */
+  match?: Match;
 }
 
 export interface OfferPublic extends OfferSummary {
@@ -65,12 +111,15 @@ export interface Page<T> {
   items: T[];
   /** null en la última página. */
   next_cursor: string | null;
+  /** Solo `GET /offers`: el orden que se aplicó de verdad (con perfil vacío, `sort=match` ordena por fecha). */
+  sorted_by?: OfferSort;
+  match_unavailable?: "perfil_vacio" | null;
 }
 
 /** Los únicos filtros de `GET /offers` (no discriminación: conjunto cerrado). */
 export const OFFER_FILTERS = ["profession_id", "state_id", "city_id", "contract_type_id", "salary_range_id", "working_shift_id", "employment_sector_id", "job_hierarchy_id"] as const;
 export type OfferFilter = (typeof OFFER_FILTERS)[number];
-export const OFFER_SORTS = ["recent", "oldest"] as const;
+export const OFFER_SORTS = ["recent", "oldest", "match"] as const;
 export type OfferSort = (typeof OFFER_SORTS)[number];
 
 export interface OfferQuery {
@@ -82,9 +131,9 @@ export interface OfferQuery {
 }
 
 /** El conjunto cerrado de lo que se puede compartir al aplicar, en el orden canónico del contrato. */
-export const SHARED_FIELDS = ["display_name", "skills", "experience", "experience_descriptions", "languages", "education", "profile_description", "email", "phone"] as const;
+export const SHARED_FIELDS = ["display_name", "skills", "experience", "experience_descriptions", "languages", "education", "profile_description", "email", "phone", "match_score"] as const;
 export type SharedField = (typeof SHARED_FIELDS)[number];
-/** Siempre van: sin ellos el reclutador no tiene con qué evaluar. */
+/** Siempre van: sin ellos el reclutador no tiene con qué evaluar. `match_score` (el décimo, 5b) es opcional y va desmarcado. */
 export const MANDATORY_FIELDS: readonly SharedField[] = ["display_name", "skills", "experience"];
 
 export interface ApplyBody {
