@@ -6,6 +6,7 @@ import { CV_ID, catalogoPorUrl } from "./helpers/cv";
 import { t } from "@/lib/messages";
 import { goTo } from "@/lib/navigate";
 import ProfileView from "@/app/_components/ProfileView";
+import { alertaCon } from "./helpers/alerta";
 
 vi.mock("@/lib/navigate", () => ({ goTo: vi.fn() }));
 afterEach(() => {
@@ -67,7 +68,7 @@ describe("estados de la pantalla", () => {
     let falla = true;
     backend({ fallo: (c) => (falla && c.url === "/api/profile" ? jsonRes(502, { error: "servicio_no_disponible" }) : null) });
     render(<ProfileView />);
-    expect(await screen.findByRole("alert")).toHaveTextContent(t("profile.error"));
+    await alertaCon(t("profile.error"));
     falla = false;
     fireEvent.click(screen.getByRole("button", { name: t("profile.retry") }));
     await cargado();
@@ -125,7 +126,7 @@ describe("editar el perfil", () => {
     render(<ProfileView />);
     await cargado();
     fireEvent.click(screen.getByRole("button", { name: t("profile.save") }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(t("cv.error.invalid"));
+    await alertaCon(t("cv.error.invalid"));
   });
   it("doble clic en guardar envía una sola vez", async () => {
     const { llamadas } = backend();
@@ -224,7 +225,7 @@ describe("F10 borrar un CV", () => {
     await cargado();
     fireEvent.click(borrarDe("viejo.pdf"));
     fireEvent.click(screen.getByRole("button", { name: t("cv.delete.confirm") }));
-    expect(await within(screen.getByRole("dialog")).findByRole("alert")).toHaveTextContent(t("cv.delete.failed"));
+    await waitFor(() => expect(within(screen.getByRole("dialog")).getByRole("alert")).toHaveTextContent(t("cv.delete.failed")));
     expect(screen.getByText("viejo.pdf")).toBeInTheDocument();
   });
 });

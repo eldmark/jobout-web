@@ -41,7 +41,11 @@ function backend(sesion: unknown = COMPLETA(), extra: (c: Llamada) => Response |
     return jsonRes(404);
   });
 }
-const cargado = () => screen.findByRole("heading", { level: 1, name: t("interview.transcript.title") }, ESPERA);
+/** Espera a que termine de cargar. El h1 ya está mientras carga (con `aria-busy`): verlo no alcanza. */
+async function cargado() {
+  await screen.findByRole("heading", { level: 1, name: t("interview.transcript.title") }, ESPERA);
+  await waitFor(() => expect(screen.getByRole("main")).not.toHaveAttribute("aria-busy"), ESPERA);
+}
 const lista = () => screen.getByRole("list", { name: t("interview.transcript.messages") });
 
 describe("transcripción de una sesión completada", () => {
