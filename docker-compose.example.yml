@@ -24,6 +24,8 @@ services:
       - "3000:3000"
     volumes:
       - .:/app
-      # Anónimos: el node_modules y el caché del contenedor no los pisa el host
+      # Anónimos: el node_modules y el caché del contenedor no los pisa el host.
+      # Ojo: sobreviven a `git pull`. Si llega una dependencia nueva, hay que reconstruir:
+      #   docker compose build web && docker compose up -d --no-deps --force-recreate -V web
       - /app/node_modules
       - /app/.next

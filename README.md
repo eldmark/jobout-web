@@ -52,6 +52,16 @@ El contenedor de desarrollo monta el código del host, así que al guardar un ar
 se actualiza sola. `node_modules` y `.next` viven en volúmenes anónimos: el contenedor usa los
 suyos y no los pisa lo que tengas en el host.
 
+**Después de `git pull` con una dependencia nueva** (cambió `package.json` o `package-lock.json`),
+el volumen anónimo de `node_modules` sigue siendo el viejo: la página falla con
+`Module not found: Can't resolve '…'` (por ejemplo `three`, de la sala de entrevista). Es un error
+de compilación del servidor de desarrollo, no del navegador, así que ningún respaldo de la interfaz
+puede taparlo. Se arregla reconstruyendo la imagen y recreando el contenedor con su volumen:
+
+```bash
+docker compose build web && docker compose up -d --no-deps --force-recreate -V web
+```
+
 ## Variables de entorno
 
 Todo lo que lleve **`NEXT_PUBLIC_`** se compila dentro del bundle y **viaja al navegador**. Es
