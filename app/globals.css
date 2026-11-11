@@ -45,6 +45,27 @@
   --realce: color-mix(in srgb, var(--color-indigo) 9%, var(--fondo));
   --curva: cubic-bezier(0.22, 1, 0.36, 1);
   --radio: 1rem;
+
+  /* Sombras con el color de cada pieza: desplazamiento y desenfoque suaves, tinte de marca.
+     La «alta» es la del hover (la pieza se levanta). Los rellenos van teñidos con `--tinte`
+     (porcentaje de color de marca sobre la tarjeta) y `--brillo` (destello en la esquina). */
+  --sombra-indigo: 0 1px 2px color-mix(in srgb, var(--color-ink) 10%, transparent),
+    0 14px 26px -12px color-mix(in srgb, var(--color-indigo) 55%, transparent);
+  --sombra-indigo-alta: 0 2px 4px color-mix(in srgb, var(--color-ink) 10%, transparent),
+    0 24px 38px -14px color-mix(in srgb, var(--color-indigo) 68%, transparent);
+  --sombra-coral: 0 1px 2px color-mix(in srgb, var(--color-ink) 10%, transparent),
+    0 14px 26px -12px color-mix(in srgb, var(--color-coral) 62%, transparent);
+  --sombra-coral-alta: 0 2px 4px color-mix(in srgb, var(--color-ink) 10%, transparent),
+    0 24px 38px -14px color-mix(in srgb, var(--color-coral) 72%, transparent);
+  --sombra-mint: 0 1px 2px color-mix(in srgb, var(--color-ink) 10%, transparent),
+    0 14px 26px -12px color-mix(in srgb, var(--color-mint) 60%, transparent);
+  --sombra-mint-alta: 0 2px 4px color-mix(in srgb, var(--color-ink) 10%, transparent),
+    0 24px 38px -14px color-mix(in srgb, var(--color-mint) 70%, transparent);
+  --tinte: 13%;
+  --brillo: 22%;
+
+  /* Grano: ruido fractal en un SVG embebido (sin imágenes externas), casi transparente. */
+  --grano: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .55 -.18'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
 }
 
 @media (prefers-color-scheme: dark) {
@@ -60,6 +81,21 @@
     --sombra: 0 1px 2px color-mix(in srgb, var(--color-ink) 60%, transparent),
       0 14px 30px -18px color-mix(in srgb, var(--color-ink) 90%, transparent);
     --realce: color-mix(in srgb, var(--color-lavender) 11%, var(--color-ink));
+    /* En oscuro el color se ve como luz: más tinte y más alfa en la sombra. */
+    --sombra-indigo: 0 1px 2px color-mix(in srgb, var(--color-ink) 60%, transparent),
+      0 14px 28px -12px color-mix(in srgb, var(--color-indigo) 70%, transparent);
+    --sombra-indigo-alta: 0 2px 4px color-mix(in srgb, var(--color-ink) 60%, transparent),
+      0 24px 40px -14px color-mix(in srgb, var(--color-indigo) 85%, transparent);
+    --sombra-coral: 0 1px 2px color-mix(in srgb, var(--color-ink) 60%, transparent),
+      0 14px 28px -12px color-mix(in srgb, var(--color-coral) 58%, transparent);
+    --sombra-coral-alta: 0 2px 4px color-mix(in srgb, var(--color-ink) 60%, transparent),
+      0 24px 40px -14px color-mix(in srgb, var(--color-coral) 70%, transparent);
+    --sombra-mint: 0 1px 2px color-mix(in srgb, var(--color-ink) 60%, transparent),
+      0 14px 28px -12px color-mix(in srgb, var(--color-mint) 52%, transparent);
+    --sombra-mint-alta: 0 2px 4px color-mix(in srgb, var(--color-ink) 60%, transparent),
+      0 24px 40px -14px color-mix(in srgb, var(--color-mint) 64%, transparent);
+    --tinte: 17%;
+    --brillo: 20%;
   }
 }
 
@@ -1242,6 +1278,627 @@ textarea {
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
+  }
+}
+/* --- Panel (dashboards): superficies con color propio, sombra del mismo color, grano y movimiento ---
+   Cada pieza fija `--c` (su color de marca) y `--sobre-c` (el color de lo que va encima de `--c` sólido:
+   blanco sobre índigo, tinta sobre coral y menta). Fondo, sombra, icono y gráfico salen de ahí. */
+.pagina--panel {
+  max-width: 68rem;
+}
+
+.c-indigo {
+  --c: var(--color-indigo);
+  --sobre-c: var(--color-white);
+  --sombra-c: var(--sombra-indigo);
+  --sombra-c-alta: var(--sombra-indigo-alta);
+}
+
+.c-coral {
+  --c: var(--color-coral);
+  --sobre-c: var(--color-ink);
+  --sombra-c: var(--sombra-coral);
+  --sombra-c-alta: var(--sombra-coral-alta);
+}
+
+.c-mint {
+  --c: var(--color-mint);
+  --sobre-c: var(--color-ink);
+  --sombra-c: var(--sombra-mint);
+  --sombra-c-alta: var(--sombra-mint-alta);
+}
+
+/* Héroe: el momento expresivo de la página. Siempre sobre fondo oscuro de marca (blanco ≥ 7:1). */
+.heroe {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  gap: 0.5rem;
+  margin: 0 0 1.5rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border-radius: calc(var(--radio) * 1.5);
+  color: var(--color-white);
+  background:
+    radial-gradient(70% 100% at 100% 0%, color-mix(in srgb, var(--color-coral) 34%, transparent), transparent 62%),
+    radial-gradient(55% 90% at 0% 110%, color-mix(in srgb, var(--color-mint) 22%, transparent), transparent 65%),
+    linear-gradient(135deg, color-mix(in srgb, var(--color-indigo) 78%, var(--color-ink)), color-mix(in srgb, var(--color-indigo) 38%, var(--color-ink)));
+  box-shadow: var(--sombra-indigo-alta);
+}
+
+.heroe > * {
+  position: relative;
+  z-index: 1;
+}
+
+.heroe::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--grano);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.heroe::after {
+  content: "";
+  position: absolute;
+  inset: -20% auto -20% -60%;
+  z-index: 0;
+  width: 45%;
+  background: linear-gradient(105deg, transparent, color-mix(in srgb, var(--color-white) 12%, transparent), transparent);
+  transform: translateX(0) skewX(-12deg);
+  pointer-events: none;
+}
+
+.heroe .marca {
+  color: var(--color-white);
+  margin: 0 0 0.75rem;
+}
+
+.pagina .heroe h1 {
+  color: var(--color-white);
+  margin: 0;
+  font-size: clamp(2rem, 1.4rem + 2.6vw, 3.25rem);
+}
+
+.heroe__texto {
+  margin: 0;
+  max-width: 46ch;
+  color: color-mix(in srgb, var(--color-white) 90%, var(--color-indigo));
+}
+
+.heroe__pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-top: 0.75rem;
+}
+
+.heroe .etiqueta {
+  margin: 0;
+}
+
+.heroe .boton--coral {
+  box-shadow: var(--sombra-coral);
+}
+
+.heroe .boton--borde {
+  color: var(--color-white);
+  border-color: color-mix(in srgb, var(--color-white) 70%, transparent);
+}
+
+.heroe .boton--borde:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-white) 14%, transparent);
+  border-color: var(--color-white);
+}
+
+.heroe__orbitas {
+  position: absolute;
+  z-index: 0;
+  right: -3rem;
+  bottom: -4rem;
+  width: clamp(12rem, 32vw, 20rem);
+  height: auto;
+  color: color-mix(in srgb, var(--color-white) 26%, transparent);
+  pointer-events: none;
+}
+
+/* Tarjeta con color: fondo teñido, borde y sombra del mismo color, grano suave. */
+.kpi {
+  --c: var(--color-indigo);
+  --sobre-c: var(--color-white);
+  --sombra-c: var(--sombra-indigo);
+  --sombra-c-alta: var(--sombra-indigo-alta);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+  padding: 1.125rem 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--c) 30%, var(--borde));
+  border-radius: var(--radio);
+  color: var(--texto);
+  background:
+    radial-gradient(90% 90% at 100% 0%, color-mix(in srgb, var(--c) var(--brillo), transparent), transparent 70%),
+    color-mix(in srgb, var(--c) var(--tinte), var(--tarjeta));
+  box-shadow: var(--sombra-c);
+  transition:
+    transform 0.25s var(--curva),
+    box-shadow 0.25s var(--curva);
+}
+
+.kpi::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--grano);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.kpi:hover,
+.kpi:has(a:focus-visible) {
+  transform: translateY(-3px);
+  box-shadow: var(--sombra-c-alta);
+}
+
+.kpi--ancha {
+  grid-column: span 2;
+}
+
+.kpi__cabecera {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin: 0;
+}
+
+.kpi__etiqueta {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--tenue);
+}
+
+.kpi__valor {
+  margin: 0;
+  font-family: var(--fuente-titulo);
+  font-weight: 800;
+  font-size: clamp(2rem, 1.5rem + 1.6vw, 2.75rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi__valor small {
+  font-family: var(--fuente-texto);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  letter-spacing: 0;
+  color: var(--tenue);
+}
+
+.kpi__nota {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--tenue);
+}
+
+.kpi__cuerpo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.icono-chip {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  background: var(--c);
+  color: var(--sobre-c);
+  box-shadow: var(--sombra-c);
+}
+
+.icono-chip svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.ejemplo {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.3125rem 0.625rem;
+  border: 1px dashed var(--tenue);
+  border-radius: 999px;
+  background: var(--realce);
+  color: var(--texto);
+}
+
+.panel-lista {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 52rem) {
+  .panel-lista {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.panel-lista > li {
+  display: grid;
+}
+
+.panel-seccion {
+  margin: 0 0 1.5rem;
+}
+
+.pagina .panel-seccion > h2 {
+  margin: 0 0 0.875rem;
+}
+
+/* Anillo de avance: la pista y el arco comparten color; el arco se dibuja con pathLength = 100. */
+.anillo {
+  flex: none;
+  width: 4.5rem;
+  height: 4.5rem;
+  color: var(--c);
+}
+
+.anillo__pista {
+  stroke: color-mix(in srgb, var(--c) 24%, transparent);
+}
+
+.anillo__arco {
+  stroke: var(--c);
+  stroke-dasharray: var(--p) 100;
+}
+
+/* Gráfico pequeño de puntajes. */
+.mini-grafico {
+  display: block;
+  width: 100%;
+  height: 3rem;
+  color: var(--c);
+  overflow: visible;
+}
+
+.mini-grafico__linea {
+  stroke: var(--c);
+}
+
+.mini-grafico__area {
+  fill: color-mix(in srgb, var(--c) 22%, transparent);
+}
+
+.mini-grafico__punto {
+  fill: var(--c);
+  stroke: var(--tarjeta);
+}
+
+/* Racha: llama y siete días. */
+.racha__cuerpo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.llama {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-coral) 26%, transparent);
+  box-shadow: var(--sombra-coral);
+  color: var(--color-coral);
+}
+
+.llama svg {
+  width: 2.25rem;
+  height: 2.25rem;
+  transform-origin: 50% 90%;
+}
+
+.racha__dias {
+  list-style: none;
+  display: flex;
+  gap: 0.375rem;
+  margin: 0.25rem 0 0;
+  padding: 0;
+}
+
+.racha__dia {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--tenue);
+}
+
+.racha__punto {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 2px dashed var(--tenue);
+}
+
+.racha__punto svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.racha__dia[data-hecho="true"] .racha__punto {
+  border: 2px solid var(--color-coral);
+  background: var(--color-coral);
+  color: var(--color-ink);
+  box-shadow: var(--sombra-coral);
+}
+
+.racha__dia[data-hoy="true"] .racha__punto {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+/* Buscador de ofertas. */
+.buscador {
+  display: grid;
+  gap: 0.875rem;
+  padding: 1.25rem;
+}
+
+.buscador__fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+.buscador__campo {
+  flex: 1 1 14rem;
+  min-height: 3rem;
+  padding: 0.5rem 1.125rem;
+  border: 2px solid color-mix(in srgb, var(--c) 45%, var(--borde));
+  border-radius: 999px;
+  background: var(--fondo);
+  color: var(--texto);
+  font: inherit;
+}
+
+.buscador__campo:focus-visible {
+  border-color: var(--acento);
+}
+
+.buscador__ayuda {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--tenue);
+}
+
+.chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.375rem 1rem;
+  border-radius: 999px;
+  border: 1.5px solid color-mix(in srgb, var(--c) 55%, transparent);
+  background: color-mix(in srgb, var(--c) 14%, var(--tarjeta));
+  color: var(--texto);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  text-decoration: none;
+  transition:
+    transform 0.2s var(--curva),
+    box-shadow 0.2s var(--curva);
+}
+
+.chip:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sombra-c);
+}
+
+/* Atajos: piezas de color, cada una con su icono. */
+.atajos {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.875rem;
+}
+
+.atajo {
+  --c: var(--color-indigo);
+  --sobre-c: var(--color-white);
+  --sombra-c: var(--sombra-indigo);
+  --sombra-c-alta: var(--sombra-indigo-alta);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  min-height: 4.5rem;
+  padding: 0.75rem 1.125rem;
+  border: 1px solid color-mix(in srgb, var(--c) 30%, var(--borde));
+  border-radius: var(--radio);
+  background:
+    radial-gradient(90% 120% at 100% 0%, color-mix(in srgb, var(--c) var(--brillo), transparent), transparent 70%),
+    color-mix(in srgb, var(--c) var(--tinte), var(--tarjeta));
+  color: var(--texto);
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: var(--sombra-c);
+  transition:
+    transform 0.25s var(--curva),
+    box-shadow 0.25s var(--curva);
+}
+
+.atajo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--grano);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.atajo::after {
+  content: "";
+  flex: none;
+  margin-left: auto;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-top: 2px solid var(--tenue);
+  border-right: 2px solid var(--tenue);
+  transform: rotate(45deg);
+  transition: transform 0.25s var(--curva);
+}
+
+.atajo:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--sombra-c-alta);
+}
+
+.atajo:hover::after {
+  transform: translateX(3px) rotate(45deg);
+}
+
+/* Estado de la empresa. */
+.estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  width: fit-content;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  background: color-mix(in srgb, var(--c) 22%, var(--tarjeta));
+  border: 1.5px solid var(--c);
+  color: var(--texto);
+}
+
+/* Movimiento: solo con preferencia normal. Sin ella todo queda dibujado y quieto. */
+@media (prefers-reduced-motion: no-preference) {
+  .heroe::after {
+    animation: destello 9s var(--curva) 1.2s infinite;
+  }
+
+  .heroe__orbitas {
+    animation: gira 60s linear infinite;
+  }
+
+  .panel-lista > li,
+  .atajos > li {
+    animation: aparece 0.55s var(--curva) backwards;
+    animation-delay: calc(0.12s + var(--i, 0) * 0.06s);
+  }
+
+  .llama svg {
+    animation: parpadeo 2.4s ease-in-out infinite;
+  }
+
+  .anillo__arco {
+    animation: dibuja 1.1s var(--curva) 0.3s backwards;
+  }
+
+  .mini-grafico__linea {
+    stroke-dasharray: 1;
+    animation: traza 1.1s var(--curva) 0.3s backwards;
+  }
+
+  .racha__dia[data-hecho="true"] .racha__punto {
+    animation: pop 0.45s var(--curva) backwards;
+    animation-delay: calc(0.5s + var(--i, 0) * 0.07s);
+  }
+}
+
+@keyframes destello {
+  0%,
+  55% {
+    transform: translateX(0) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(520%) skewX(-12deg);
+  }
+}
+
+@keyframes gira {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes parpadeo {
+  0%,
+  100% {
+    transform: scale(1) rotate(-2deg);
+  }
+  50% {
+    transform: scale(1.08, 1.12) rotate(2deg);
+  }
+}
+
+@keyframes dibuja {
+  from {
+    stroke-dasharray: 0 100;
+  }
+}
+
+@keyframes traza {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kpi,
+  .atajo,
+  .chip {
+    transition: none;
+  }
+
+  .kpi:hover,
+  .atajo:hover,
+  .chip:hover,
+  .kpi:has(a:focus-visible) {
+    transform: none;
   }
 }
 } /* fin de @layer legacy */
