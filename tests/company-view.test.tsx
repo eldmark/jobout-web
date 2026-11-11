@@ -129,6 +129,9 @@ describe("con empresa", () => {
     await screen.findByText("Café Nuevo S.A.", {}, ESPERA);
     const main = screen.getByRole("main");
     expect(main).toHaveTextContent("1234567-8");
+    // Los datos se muestran con su nombre, no con la etiqueta del formulario («(opcional)»).
+    expect(main).toHaveTextContent(t("company.data.website"));
+    expect(main).not.toHaveTextContent("(opcional)");
     expect(main).toHaveTextContent("<b>negrita</b>");
     expect(main.querySelector("img, script, b")).toBeNull();
     expect(screen.getByRole("link", { name: t("company.toOffers") })).toHaveAttribute("href", "/company/offers");

@@ -209,7 +209,7 @@ export default function AdminCompanies() {
                   </div>
                   {c.website ? (
                     <div>
-                      <dt>{t("companyForm.field.website")}</dt>
+                      <dt>{t("company.data.website")}</dt>
                       <dd>{c.website}</dd>
                     </div>
                   ) : null}

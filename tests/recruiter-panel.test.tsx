@@ -7,6 +7,7 @@ import { DETALLE_PANEL, FILA_ANONIMA, FILA_PANEL, OFERTA_DETALLE, OFF, PAP, PAP2
 import { HOSTIL } from "./helpers/offers";
 import { t, tf } from "@/lib/messages";
 import { formatDate } from "@/lib/interviews/format";
+import { formatDay } from "@/lib/offers/format";
 import RecruiterPanel from "@/app/_components/RecruiterPanel";
 
 vi.mock("@/lib/navigate", () => ({ goTo: vi.fn() }));
@@ -98,7 +99,7 @@ describe("el detalle (PA2, PA3)", () => {
     const d = await abrirDetalle();
     expect(d).toHaveTextContent("Rust");
     expect(d).toHaveTextContent(t("form.level.advanced"));
-    expect(d).toHaveTextContent("Acme");
+    expect(d).toHaveTextContent(tf("panel.experience.lineCurrent", { title: "Dev", company: "Acme", start: formatDay("2022-01-01") }));
     expect(within(d).queryByRole("heading", { name: t("panel.shared.contact") })).toBeNull();
     expect(within(d).queryByRole("heading", { name: t("panel.shared.languages") })).toBeNull();
     expect(d).toHaveTextContent(tf("panel.history.first", { to: t("applications.status.applied"), date: formatDate("2026-11-13T15:00:00.123456Z") }));

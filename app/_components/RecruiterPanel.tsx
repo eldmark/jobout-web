@@ -57,7 +57,9 @@ function Compartido({ a }: { a: SharedApplicant }) {
           <ul>
             {a.experience.map((e, i) => (
               <li key={`${e.company}-${i}`}>
-                {tf("panel.experience.line", { title: e.title, company: e.company, start: formatDay(e.start_date), end: e.end_date ? formatDay(e.end_date) : t("panel.experience.current") })}
+                {e.end_date
+                  ? tf("panel.experience.line", { title: e.title, company: e.company, start: formatDay(e.start_date), end: formatDay(e.end_date) })
+                  : tf("panel.experience.lineCurrent", { title: e.title, company: e.company, start: formatDay(e.start_date) })}
                 {e.description ? <p className="texto-libre">{e.description}</p> : null}
               </li>
             ))}

@@ -541,8 +541,8 @@ export default function CompanyView() {
   const admin = empresa.my_role === "company_admin";
   const datos: [MessageKey, string | null][] = [
     ["companyForm.field.taxId", empresa.tax_id],
-    ["companyForm.field.website", empresa.website],
-    ["companyForm.field.phone", empresa.phone],
+    ["company.data.website", empresa.website],
+    ["company.data.phone", empresa.phone],
     ["company.myRole", t(ROL[empresa.my_role] ?? "company.role.recruiter")],
     ["company.membership", empresa.membership ? tf("company.membershipDates", { start: formatDay(empresa.membership.start_date), end: formatDay(empresa.membership.expiration_date) }) : null],
   ];

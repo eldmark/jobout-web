@@ -45,6 +45,7 @@ describe("cola por verificar", () => {
     await listo();
     expect(Object.fromEntries(consulta(llamadas[0]))).toEqual({ verified: "false", limit: "20" });
     const [f] = filas();
+    expect(f).not.toHaveTextContent("(opcional)");
     for (const texto of ["Café Nuevo S.A.", "1234567-8", "https://cafenuevo.example", tf("admin.domain", { domain: "cafenuevo.example" }), tf("admin.recruiters", { n: 1 })]) expect(f, texto).toHaveTextContent(texto);
   });
   it("verificar llama una vez, la quita de la cola y lo anuncia", async () => {
