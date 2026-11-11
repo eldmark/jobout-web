@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import ConfirmDialog from "./ConfirmDialog";
+import InterviewerAvatar, { useAvatarState } from "./InterviewerAvatar";
 import InterviewResult, { DeleteSession, SessionDeleted } from "./InterviewResult";
 import { interviewErrorText, isRetryable } from "@/lib/interviews/errors";
 import { interviewsApi, isOk } from "@/lib/interviews/client";
@@ -185,6 +186,10 @@ export default function InterviewRoom({ id }: { id: string }) {
     setRetomando(false);
   }
 
+  const turnoRecruiter = [...turnos].reverse().find((x) => x.speaker === "recruiter");
+  // Habla cuando llega un turno nuevo del recruiter (también la pregunta inicial al entrar).
+  const avatar = useAvatarState(esperando, sesion ? (turnoRecruiter?.seq ?? null) : null, turnoRecruiter?.text ?? "");
+
   if (cargaError) {
     return (
       <main className="pagina">
@@ -234,7 +239,6 @@ export default function InterviewRoom({ id }: { id: string }) {
   }
 
   const nombre = sesion.recruiter.display_name;
-  const ultimoRecruiter = [...turnos].reverse().find((x) => x.speaker === "recruiter");
   const pausada = status === "paused";
   const estado = pausada ? t("interview.room.status.paused") : esperando ? tf("interview.room.status.thinking", { name: nombre }) : t("interview.room.status.yourTurn");
   const describe = ["resp-ayuda", validacion ? "resp-error" : ""].filter(Boolean).join(" ");
@@ -250,6 +254,8 @@ export default function InterviewRoom({ id }: { id: string }) {
       <p className="etiqueta-estado" role="status">
         {estado}
       </p>
+
+      <InterviewerAvatar name={nombre} state={avatar} />
 
       <div className="formulario__error" role="alert" aria-live="assertive">
         {errorAccion ?? errorEnvio?.text ?? null}
@@ -271,7 +277,7 @@ export default function InterviewRoom({ id }: { id: string }) {
       ) : (
         <>
           <p className="solo-lectores" aria-live="polite" aria-atomic="true">
-            {ultimoRecruiter?.text ?? ""}
+            {turnoRecruiter?.text ?? ""}
           </p>
           <ol className="conversacion" aria-label={t("interview.room.transcript")}>
             {turnos.map((x) => (
