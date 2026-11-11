@@ -25,6 +25,8 @@ export interface CursorList<T> {
   more: () => Promise<void>;
   /** Índice del primer elemento recién añadido, para mover el foco ahí; el componente lo consume. */
   firstNew: MutableRefObject<number | null>;
+  /** La primera página tal como llegó (con `sorted_by`, `match_unavailable`...); null mientras carga. */
+  head: Page<T> | null;
 }
 
 /** `fetchPage` cambia cuando cambia la consulta (p. ej. los filtros): entonces se recarga desde cero. */
@@ -34,6 +36,7 @@ export function useCursorList<T extends { id: string }>(fetchPage: (cursor?: str
   const [phase, setPhase] = useState("loading" as CursorList<T>["phase"]);
   const [loadingMore, setLoadingMore] = useState(false);
   const [moreError, setMoreError] = useState(false);
+  const [head, setHead] = useState(null as Page<T> | null);
   const enVuelo = useRef(false);
   const firstNew = useRef(null as number | null);
   // Cada recarga es una «generación»: la respuesta de una consulta vieja que llega tarde se descarta.
@@ -46,6 +49,7 @@ export function useCursorList<T extends { id: string }>(fetchPage: (cursor?: str
     const r = await fetchPage(undefined);
     if (gen !== generacion.current) return;
     if (r.data) {
+      setHead(r.data);
       setItems(r.data.items);
       setCursor(r.data.next_cursor ?? null);
       setPhase("ready");
@@ -68,6 +72,12 @@ export function useCursorList<T extends { id: string }>(fetchPage: (cursor?: str
     enVuelo.current = false;
     setLoadingMore(false);
     if (gen !== generacion.current) return;
+    // 422 con cursor: el cursor es de otro orden (p. ej. el de `sort=match` en otro listado). No se
+    // puede continuar; se vuelve a la primera página en vez de dejar un error sin salida.
+    if (r.status === 422) {
+      await reload();
+      return;
+    }
     if (r.data) {
       const nuevos = r.data.items;
       setItems((prev) => {
@@ -78,7 +88,7 @@ export function useCursorList<T extends { id: string }>(fetchPage: (cursor?: str
     } else if (r.status !== 401) {
       setMoreError(true);
     }
-  }, [cursor, fetchPage]);
+  }, [cursor, fetchPage, reload]);
 
-  return { items, setItems, phase, hasMore: cursor !== null, loadingMore, moreError, reload, more, firstNew };
+  return { items, setItems, phase, hasMore: cursor !== null, loadingMore, moreError, reload, more, firstNew, head };
 }

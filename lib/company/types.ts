@@ -4,7 +4,7 @@
  * reclutador» (con las precisiones del paso 7). Formas tomadas de core-api.
  */
 import type { Proficiency, SkillLevel } from "@/lib/cv/types";
-import type { ApplicationStatus, CatalogRef, SharedField } from "@/lib/offers/types";
+import type { ApplicationStatus, CatalogRef, Match, SharedField } from "@/lib/offers/types";
 
 export type CompanyRole = "company_admin" | "recruiter";
 export const COMPANY_ROLES: readonly CompanyRole[] = ["recruiter", "company_admin"];
@@ -162,6 +162,8 @@ export interface SharedApplicant {
   profile_description?: string | null;
   email?: string;
   phone?: string | null;
+  /** Solo si la persona lo compartió (`match_score`): calculado con lo que compartió en esa aplicación. */
+  match_score?: Match;
 }
 
 export interface PanelApplication extends Omit<PanelRow, "applicant"> {

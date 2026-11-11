@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { offersApi, type CatalogName } from "@/lib/offers/client";
 import { applicationStatusLabel, formatDay, placeOf, publicCompany } from "@/lib/offers/format";
+import { isMatch } from "@/lib/offers/match";
 import { useCursorList } from "@/lib/offers/paging";
 import { OFFER_SORTS, type CatalogRef, type OfferFilter, type OfferSort, type OfferSummary } from "@/lib/offers/types";
 import { t, tf, type MessageKey } from "@/lib/messages";
@@ -23,7 +24,7 @@ const FILTROS: { campo: OfferFilter; catalogo: CatalogName; etiqueta: MessageKey
   { campo: "employment_sector_id", catalogo: "employment-sectors", etiqueta: "offers.filters.sector" },
   { campo: "job_hierarchy_id", catalogo: "job-hierarchies", etiqueta: "offers.filters.hierarchy" },
 ];
-const ORDEN: Record<OfferSort, MessageKey> = { recent: "offers.filters.sort.recent", oldest: "offers.filters.sort.oldest" };
+const ORDEN: Record<OfferSort, MessageKey> = { recent: "offers.filters.sort.recent", oldest: "offers.filters.sort.oldest", match: "offers.filters.sort.match" };
 /** Los catálogos que se cargan al abrir la página (el de municipios va por departamento). */
 const FIJOS = FILTROS.filter((f) => f.campo !== "city_id");
 
@@ -63,13 +64,21 @@ function Tarjeta({ o }: { o: OfferSummary }) {
             </div>
           ))}
       </dl>
+      {isMatch(o.match) ? (
+        <p className="afinidad__chip">
+          {tf("match.score", { n: o.match.score })}
+          <span className="afinidad__pista" aria-hidden="true">
+            <span className="afinidad__barra" style={{ width: `${o.match.score}%` }} />
+          </span>
+        </p>
+      ) : null}
       <p className="campo__ayuda">{tf("offers.published", { date: formatDay(o.publication_date) })}</p>
       {o.my_application ? <p className="etiqueta-estado">{tf("offers.appliedBadge", { status: applicationStatusLabel(o.my_application.status) })}</p> : null}
     </li>
   );
 }
 
-/** HU-30 sin matching (5a): ofertas visibles con filtros de catálogo y «Cargar más». Sin buscador de texto ni filtro por empresa. */
+/** HU-30: ofertas visibles con filtros de catálogo, afinidad (5b) y «Cargar más». Sin buscador de texto ni filtro por empresa. */
 export default function OffersList() {
   const [consulta, setConsulta] = useState(SIN_FILTROS);
   const [form, setForm] = useState(SIN_FILTROS);
@@ -79,7 +88,7 @@ export default function OffersList() {
   const lista = useRef(null as HTMLUListElement | null);
 
   const pagina = useCallback((cursor?: string) => offersApi.list({ limit: PAGINA, cursor, sort: consulta.sort, filters: consulta.filtros }), [consulta]);
-  const { items, phase, hasMore, loadingMore, moreError, reload, more, firstNew } = useCursorList(pagina);
+  const { items, phase, hasMore, loadingMore, moreError, reload, more, firstNew, head } = useCursorList(pagina);
 
   useEffect(() => {
     let vivo = true;
@@ -198,6 +207,11 @@ export default function OffersList() {
       </form>
 
       <div className="resultados">
+        {phase === "ready" && head?.match_unavailable === "perfil_vacio" ? (
+          <p className="aviso" role="status">
+            {t("offers.match.unavailable")} <Link href="/profile">{t("offers.match.unavailableLink")}</Link>
+          </p>
+        ) : null}
         {phase === "error" ? (
           <>
             <p className="formulario__error" role="alert">

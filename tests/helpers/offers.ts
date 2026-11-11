@@ -135,3 +135,38 @@ export function catalogoOfertas(url: string): Response | null {
 
 /** Texto hostil (SX7): si algo de esto se interpretara como HTML, aparecería un elemento. */
 export const HOSTIL = `<img src=x onerror="window.__pwned=1"><script>window.__pwned=1</script><b>negrita</b>`;
+
+/** `match` de `GET /offers` y `GET /offers/{id}` (`api.md`, «Matching»): siempre los cuatro componentes, en orden. */
+export const MATCH = (score = 67, over: Record<string, unknown> = {}) => ({
+  score,
+  breakdown: {
+    reason: null,
+    empty_profile: false,
+    components: [
+      {
+        key: "skills",
+        weight: 50,
+        points: 33.3,
+        applies: true,
+        matched: [{ skill: cat("s-rust", "rust", "Rust"), required: true }],
+        partial: [{ skill: cat("s-go", "go", "Go"), required: false, min_level: "advanced", level: "intermediate" }],
+        missing: [{ skill: cat("s-sql", "sql", "SQL"), required: true }],
+      },
+      {
+        key: "languages",
+        weight: 15,
+        points: 15,
+        applies: true,
+        matched: [{ language: cat("l-en", "en", "Inglés"), min_proficiency: "intermediate", proficiency: "advanced" }],
+        partial: [],
+        missing: [{ language: cat("l-fr", "fr", "Francés"), min_proficiency: "basic" }],
+      },
+      { key: "experience", weight: 20, points: 10, applies: true, required_years: 4, years: 2 },
+      { key: "academic_level", weight: 15, points: 0, applies: false, reason: "no_pedido" },
+    ],
+  },
+  ...over,
+});
+
+/** Una página de `GET /offers` con los campos del matching. */
+export const paginaConMatch = <T>(lista: T[], next_cursor: string | null = null, sorted_by = "recent", match_unavailable: string | null = null) => ({ items: lista, next_cursor, sorted_by, match_unavailable });

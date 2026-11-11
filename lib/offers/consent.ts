@@ -34,5 +34,7 @@ export function fieldAvailability(p: ProfileData | null): Record<SharedField, bo
     profile_description: lleno(p.description),
     email: true,
     phone: lleno(p.phone),
+    // El puntaje se calcula con lo que haya; compartirlo no depende de un dato del perfil.
+    match_score: true,
   };
 }

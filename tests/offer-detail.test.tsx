@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup, within, waitFor } from "@testing-library/react";
 import { dobleClic } from "./helpers/doble";
 import { jsonRes, stubFetch, type Llamada } from "./helpers/backend";
-import { AID, APLICACION_DETALLE, DETALLE, EMPRESA, HOSTIL, OID, PERFIL, PERFIL_VACIO } from "./helpers/offers";
+import { AID, APLICACION_DETALLE, DETALLE, EMPRESA, HOSTIL, MATCH, OID, PERFIL, PERFIL_VACIO } from "./helpers/offers";
 import { t, tf } from "@/lib/messages";
 import { goTo } from "@/lib/navigate";
 import { formatDay } from "@/lib/offers/format";
@@ -18,7 +18,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-const OPCIONALES = ["experience_descriptions", "languages", "education", "profile_description", "email", "phone"] as const;
+const OPCIONALES = ["experience_descriptions", "languages", "education", "profile_description", "email", "phone", "match_score"] as const;
 
 /** Backend simulado: la oferta, el perfil y la respuesta de aplicar (por defecto 201). */
 function backend(o: { oferta?: unknown; perfil?: unknown; aplicar?: (c: Llamada) => Response | Promise<Response> } = {}) {
@@ -315,5 +315,57 @@ describe("teclado (FC7)", () => {
     expect(primera).toHaveFocus();
     fireEvent.keyDown(dialogo(), { key: "Tab", shiftKey: true });
     expect(cancelar).toHaveFocus();
+  });
+});
+
+describe("matching: «Afinidad con tu perfil» en el detalle", () => {
+  it("una sección con nombre con el puntaje, la explicación y los cuatro componentes", async () => {
+    backend({ oferta: DETALLE({ match: MATCH(67) }) });
+    render(<OfferDetail id={OID} />);
+    await listo();
+    const s = screen.getByRole("region", { name: t("match.title.candidate") });
+    expect(s).toHaveTextContent("Afinidad 67 %");
+    expect(s).toHaveTextContent(t("match.explain.candidate"));
+    expect(within(s).getAllByRole("heading", { level: 3 })).toHaveLength(4);
+    expect(s).toHaveTextContent("Rust");
+    expect(s).toHaveTextContent(t("match.reason.no_pedido"));
+  });
+  it("sin match en la respuesta, no hay sección", async () => {
+    backend();
+    render(<OfferDetail id={OID} />);
+    await listo();
+    expect(screen.queryByRole("region", { name: t("match.title.candidate") })).toBeNull();
+  });
+});
+
+describe("matching: compartir la afinidad al aplicar", () => {
+  it("la casilla «Compartir mi afinidad con esta oferta» existe, es opcional y viene desmarcada, con su explicación", async () => {
+    backend();
+    render(<OfferDetail id={OID} />);
+    await abrir();
+    expect(casilla("match_score")).toHaveAccessibleName("Compartir mi afinidad con esta oferta");
+    expect(casilla("match_score")).not.toBeChecked();
+    expect(casilla("match_score")).not.toBeDisabled();
+    expect(casilla("match_score")).toHaveAccessibleDescription(t("apply.hint.match_score"));
+  });
+  it("sin marcarla, shared_fields no lleva match_score", async () => {
+    const { llamadas } = backend();
+    render(<OfferDetail id={OID} />);
+    await abrir();
+    fireEvent.click(acepto());
+    fireEvent.click(enviar());
+    await waitFor(() => expect(aplicaciones(llamadas)).toHaveLength(1), ESPERA);
+    expect((aplicaciones(llamadas)[0].body as { shared_fields: string[] }).shared_fields).toEqual(["display_name", "skills", "experience"]);
+  });
+  it("marcada, shared_fields lleva match_score al final", async () => {
+    const { llamadas } = backend();
+    render(<OfferDetail id={OID} />);
+    await abrir();
+    fireEvent.click(casilla("match_score"));
+    fireEvent.click(casilla("phone"));
+    fireEvent.click(acepto());
+    fireEvent.click(enviar());
+    await waitFor(() => expect(aplicaciones(llamadas)).toHaveLength(1), ESPERA);
+    expect(aplicaciones(llamadas)[0].body).toEqual({ consent: true, shared_fields: ["display_name", "skills", "experience", "phone", "match_score"] });
   });
 });

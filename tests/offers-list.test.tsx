@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup, within, waitFor } from "@testing-library/react";
 import { jsonRes, stubFetch, type Llamada } from "./helpers/backend";
-import { CI_MIXCO, CONFIDENCIAL, EMPRESA, HOSTIL, OFERTA, OID, PROF, ST_GT, ST_SAC, catalogoOfertas, paginaOfertas } from "./helpers/offers";
+import { CI_MIXCO, CONFIDENCIAL, EMPRESA, HOSTIL, MATCH, OFERTA, OID, PROF, ST_GT, ST_SAC, catalogoOfertas, paginaConMatch, paginaOfertas } from "./helpers/offers";
 import { t, tf } from "@/lib/messages";
 import { goTo } from "@/lib/navigate";
 import { formatDay } from "@/lib/offers/format";
@@ -262,5 +262,65 @@ describe("accesibilidad (FC7)", () => {
     await listo();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual(expect.arrayContaining(["Oferta 1", "Oferta 2"]));
+  });
+});
+
+describe("matching: la afinidad en el listado", () => {
+  const conMatch = (n: number, score: number) => OFERTA({ id: uuid(n), title: `Oferta ${n}`, match: MATCH(score) });
+  it("cada tarjeta dice «Afinidad 67 %» en texto (no solo color)", async () => {
+    backend({ "": paginaConMatch([conMatch(1, 67), conMatch(2, 0)], null, "match") });
+    render(<OffersList />);
+    await listo();
+    const [a, b] = tarjetas();
+    expect(a).toHaveTextContent("Afinidad 67 %");
+    expect(b).toHaveTextContent("Afinidad 0 %");
+    expect(a.querySelector(".afinidad__barra")?.closest("[aria-hidden=true]")).not.toBeNull();
+  });
+  it("una oferta sin match no pinta chip (respuesta vieja o incompleta)", async () => {
+    backend({ "": paginaConMatch([OFERTA()]) });
+    render(<OffersList />);
+    await listo();
+    expect(tarjetas()[0]).not.toHaveTextContent(/Afinidad/);
+  });
+  it("el orden «Mejor afinidad» existe y pide sort=match, y «Cargar más» usa el cursor con el mismo orden", async () => {
+    const { llamadas } = backend({ "": paginaConMatch([conMatch(1, 90)], "cur-m", "match"), "cur-m": paginaConMatch([conMatch(2, 80)], null, "match") });
+    render(<OffersList />);
+    await listo();
+    expect(within(filtro("offers.filters.sort")).getByRole("option", { name: "Mejor afinidad" })).toBeInTheDocument();
+    fireEvent.change(filtro("offers.filters.sort"), { target: { value: "match" } });
+    fireEvent.click(screen.getByRole("button", { name: t("offers.filters.apply") }));
+    await waitFor(() => expect(deOfertas(llamadas)).toHaveLength(2), ESPERA);
+    expect(Object.fromEntries(consulta(deOfertas(llamadas)[1]))).toEqual({ limit: "20", sort: "match" });
+  });
+  it("un 422 con cursor de otro orden reinicia el listado desde la primera página, sin mensaje de error", async () => {
+    let n = 0;
+    const { llamadas } = backend({}, (c) => {
+      if (!c.url.startsWith("/api/offers")) return undefined;
+      const cursor = consulta(c).get("cursor");
+      if (cursor === "viejo") return jsonRes(422, { error: "datos_invalidos" });
+      n += 1;
+      return jsonRes(200, n === 1 ? paginaConMatch([conMatch(1, 90)], "viejo", "match") : paginaConMatch([conMatch(5, 70)], null, "match"));
+    });
+    render(<OffersList />);
+    await listo();
+    fireEvent.click(mas()!);
+    await waitFor(() => expect(screen.getByRole("heading", { level: 2, name: "Oferta 5" })).toBeInTheDocument(), ESPERA);
+    expect(screen.queryByText(t("offers.moreError"))).toBeNull();
+    expect(screen.queryByRole("heading", { level: 2, name: "Oferta 1" })).toBeNull();
+    expect(deOfertas(llamadas).at(-1)!.url).not.toContain("cursor");
+  });
+  it("perfil vacío: avisa que se ordena por fecha y enlaza al perfil", async () => {
+    backend({ "": paginaConMatch([conMatch(1, 0)], null, "recent", "perfil_vacio") });
+    render(<OffersList />);
+    await listo();
+    const aviso = screen.getByText(t("offers.match.unavailable"));
+    expect(aviso.closest("[role=status]")).not.toBeNull();
+    expect(screen.getByRole("link", { name: t("offers.match.unavailableLink") })).toHaveAttribute("href", "/profile");
+  });
+  it("con perfil, no hay aviso", async () => {
+    backend({ "": paginaConMatch([conMatch(1, 50)], null, "match", null) });
+    render(<OffersList />);
+    await listo();
+    expect(screen.queryByText(t("offers.match.unavailable"))).toBeNull();
   });
 });

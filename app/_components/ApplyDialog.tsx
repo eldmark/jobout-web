@@ -18,6 +18,8 @@ const FALTA: Partial<Record<SharedField, MessageKey>> = {
   profile_description: "apply.missing.profile_description",
   phone: "apply.missing.phone",
 };
+/** Una ayuda propia para lo que no es un dato del perfil sino un cálculo (5b). */
+const AYUDA: Partial<Record<SharedField, MessageKey>> = { match_score: "apply.hint.match_score" };
 
 interface Props {
   offerId: string;
@@ -115,7 +117,8 @@ export default function ApplyDialog({ offerId, confidential, onCancel, onApplied
           {SHARED_FIELDS.map((f) => {
             const fijo = MANDATORY_FIELDS.includes(f);
             const falta = disponible[f] === false ? FALTA[f] : undefined;
-            const ayudas = [fijo ? `aplicar-${f}-fijo` : "", falta ? `aplicar-${f}-falta` : ""].filter(Boolean).join(" ");
+            const ayuda = AYUDA[f];
+            const ayudas = [fijo ? `aplicar-${f}-fijo` : "", falta ? `aplicar-${f}-falta` : "", ayuda ? `aplicar-${f}-ayuda` : ""].filter(Boolean).join(" ");
             return (
               <div className="casilla" key={f}>
                 <input
@@ -130,6 +133,11 @@ export default function ApplyDialog({ offerId, confidential, onCancel, onApplied
                 {fijo ? (
                   <p id={`aplicar-${f}-fijo`} className="campo__ayuda">
                     {t("apply.mandatory")}
+                  </p>
+                ) : null}
+                {ayuda ? (
+                  <p id={`aplicar-${f}-ayuda`} className="campo__ayuda">
+                    {t(ayuda)}
                   </p>
                 ) : null}
                 {falta ? (
