@@ -8,6 +8,7 @@ import { t, tf } from "@/lib/messages";
 import { goTo } from "@/lib/navigate";
 import { formatDate } from "@/lib/interviews/format";
 import InterviewSessions from "@/app/_components/InterviewSessions";
+import { leer } from "./helpers/fuentes";
 
 vi.mock("@/lib/navigate", () => ({ goTo: vi.fn() }));
 const ESPERA = { timeout: 5000 };
@@ -214,6 +215,44 @@ describe("«Cargar más» con cursor", () => {
     render(<InterviewSessions />);
     await listo();
     expect(screen.getByRole("status")).toHaveTextContent(/^Mostrando 3 entrevistas\.$/);
+  });
+});
+
+describe("BUG-005: «Ver resultado» y «Ver transcripción» no salen pegados", () => {
+  /** Cuerpos de las reglas cuyo selector (uno de la lista) es exactamente `sel`, sin comentarios. */
+  const regla = (sel: string) =>
+    [...leer("app/globals.css").replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+      .filter(([, s]) => s.trim().split(/\s*,\s*/).includes(sel))
+      .map(([, , cuerpo]) => cuerpo)
+      .join(";");
+
+  it("los enlaces de la columna Acciones van juntos en su propio contenedor, no sueltos en la celda", async () => {
+    paginado({ "": pagina([RESUMEN({ id: uuid(1) }), RESUMEN({ id: uuid(2), status: "paused", score: null, completed_at: null })]) });
+    render(<InterviewSessions />);
+    await listo();
+    for (const fila of filas()) {
+      const celda = within(fila).getAllByRole("cell").at(-1)!;
+      const enlaces = within(celda).getAllByRole("link");
+      const grupo = enlaces[0].parentElement!;
+      expect(grupo).not.toBe(celda);
+      expect(grupo).toHaveClass("tabla__acciones");
+      for (const a of enlaces) expect(a.parentElement).toBe(grupo);
+    }
+  });
+  it("una sesión sin acciones (abandonada) no deja un contenedor vacío", async () => {
+    paginado({ "": pagina([RESUMEN({ id: uuid(1), status: "abandoned", score: null, completed_at: null })]) });
+    const { container } = render(<InterviewSessions />);
+    await listo();
+    expect(container.querySelector(".tabla__acciones")).toBeNull();
+  });
+  it("el contenedor separa los enlaces con un hueco y deja que bajen enteros; cada enlace no se parte por dentro", () => {
+    const grupo = regla(".tabla__acciones");
+    expect(grupo).toMatch(/display\s*:\s*(inline-)?flex\b/);
+    expect(grupo).toMatch(/flex-wrap\s*:\s*wrap\b/);
+    const hueco = grupo.match(/(?:^|[;\s])(?:column-)?gap\s*:\s*([^;]+)/)?.[1].trim() ?? "";
+    expect(hueco).not.toBe("");
+    expect(hueco).not.toMatch(/^0(?:[a-z%]*)?(?:\s|$)/);
+    expect(regla(".tabla__acciones a")).toMatch(/white-space\s*:\s*nowrap\b/);
   });
 });
 
