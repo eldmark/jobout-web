@@ -143,6 +143,23 @@ h3 {
   }
 }
 
+.archivo--zona {
+  padding: 1rem;
+  border: 2px dashed var(--borde);
+  border-radius: 0.75rem;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.archivo--zona[data-arrastrando="true"] {
+  border-color: var(--color-indigo);
+  background-color: color-mix(in srgb, var(--color-indigo) 8%, transparent);
+}
+
+.archivo__suelta {
+  font-size: 0.875rem;
+  color: var(--tenue);
+}
+
 .archivo__estado {
   font-size: 0.9375rem;
   overflow-wrap: anywhere;

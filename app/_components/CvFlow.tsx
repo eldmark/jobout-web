@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type DragEvent } from "react";
 import ProfileForm from "./ProfileForm";
 import { apiFetch, errorKey, loadCatalogs, uploadCv } from "@/lib/cv/client";
 import { CV_ACCEPT, MAX_CV_BYTES, isAllowedCvType } from "@/lib/cv/limits";
@@ -26,10 +26,14 @@ export default function CvFlow() {
   const [error, setError] = useState(null as MessageKey | null);
   const [subiendo, setSubiendo] = useState(false);
   const [progreso, setProgreso] = useState(0);
+  const [arrastrando, setArrastrando] = useState(false);
   const enVuelo = useRef(false);
 
   function elegir(ev: { target: HTMLInputElement }) {
-    const f = ev.target.files?.[0] ?? null;
+    aceptar(ev.target.files?.[0] ?? null);
+  }
+
+  function aceptar(f: File | null) {
     setError(null);
     setArchivo(null);
     setNombre(f ? f.name : null);
@@ -37,6 +41,13 @@ export default function CvFlow() {
     if (f.size > MAX_CV_BYTES) return setError("cv.error.tooBig");
     if (!isAllowedCvType(f.name, f.type)) return setError("cv.error.badType");
     setArchivo(f);
+  }
+
+  function soltar(ev: DragEvent<HTMLElement>) {
+    ev.preventDefault();
+    setArrastrando(false);
+    if (subiendo) return;
+    aceptar(ev.dataTransfer?.files?.[0] ?? null);
   }
 
   async function subir() {
@@ -84,7 +95,17 @@ export default function CvFlow() {
         >
           <div className="campo">
             <label htmlFor="cv-archivo">{t("cv.upload.fileLabel")}</label>
-            <div className="archivo">
+            <div
+              className="archivo archivo--zona"
+              data-testid="cv-zona"
+              data-arrastrando={arrastrando ? "true" : undefined}
+              onDragOver={(ev) => {
+                ev.preventDefault();
+                if (!subiendo) setArrastrando(true);
+              }}
+              onDragLeave={() => setArrastrando(false)}
+              onDrop={soltar}
+            >
               <input ref={entrada} className="archivo__input" id="cv-archivo" type="file" accept={CV_ACCEPT} onChange={elegir} disabled={subiendo} aria-describedby="cv-archivo-ayuda cv-archivo-estado" />
               <span className="boton boton--borde archivo__boton" aria-hidden="true" onClick={() => entrada.current?.click()}>
                 {t("cv.upload.choose")}
@@ -92,12 +113,18 @@ export default function CvFlow() {
               <span className="archivo__estado" id="cv-archivo-estado">
                 {nombre ?? t("cv.upload.noFile")}
               </span>
+              <span className="archivo__suelta">{t("cv.upload.dropHint")}</span>
             </div>
             <p className="campo__ayuda" id="cv-archivo-ayuda">
               {t("cv.upload.hint")}
             </p>
           </div>
           {subiendo ? <progress aria-label={t("cv.upload.progress")} value={progreso} max={100} /> : null}
+          {subiendo && progreso >= 100 ? (
+            <p className="campo__ayuda" role="status">
+              {t("cv.upload.analyzing")}
+            </p>
+          ) : null}
           {error ? (
             <div className="formulario__error" role="alert" aria-live="assertive">
               {t(error)}

@@ -88,7 +88,7 @@ describe("F3 progreso y botón deshabilitado", () => {
     elegir(PDF());
     fireEvent.click(screen.getByRole("button", { name: t("cv.upload.submit") }));
     FakeXHR.last.fallarRed();
-    await alertaCon(t("cv.error.generic"));
+    await alertaCon(t("cv.error.network"));
     expect(screen.getByRole("button", { name: t("cv.upload.submit") })).toBeEnabled();
   });
 });
@@ -209,7 +209,7 @@ describe("F8 confirmar una sola vez", () => {
     await subirYRevisar();
     await revisar();
     fireEvent.click(screen.getByRole("button", { name: t("review.confirm") }));
-    await alertaCon(t("cv.error.generic"));
+    await alertaCon(t("cv.error.unavailable"));
     expect(goTo).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: t("review.confirm") })).toBeEnabled();
   });
@@ -309,5 +309,82 @@ describe("selector de archivo en español", () => {
     expect(input).not.toHaveAttribute("hidden");
     expect(input).not.toHaveAttribute("aria-hidden");
     expect(input.getAttribute("style") ?? "").not.toMatch(/display\s*:\s*none/);
+  });
+});
+
+describe("JB-78 arrastrar y soltar", () => {
+  const zona = () => screen.getByTestId("cv-zona");
+  it("soltar un PDF lo deja elegido y habilita la subida", () => {
+    backend();
+    render(<CvFlow />);
+    fireEvent.drop(zona(), { dataTransfer: { files: [PDF()] } });
+    expect(screen.getByText("cv.pdf")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t("cv.upload.submit") })).toBeEnabled();
+  });
+  it("soltar un tipo no permitido o uno pesado da el mismo aviso que el selector", () => {
+    backend();
+    render(<CvFlow />);
+    fireEvent.drop(zona(), { dataTransfer: { files: [archivo("foto.png", "image/png")] } });
+    expect(screen.getByRole("alert")).toHaveTextContent(t("cv.error.badType"));
+    fireEvent.drop(zona(), { dataTransfer: { files: [archivo("cv.pdf", "application/pdf", 5 * 1024 * 1024 + 1)] } });
+    expect(screen.getByRole("alert")).toHaveTextContent(t("cv.error.tooBig"));
+    expect(FakeXHR.instancias).toHaveLength(0);
+  });
+  it("al arrastrar encima se resalta y al salir se quita", () => {
+    backend();
+    render(<CvFlow />);
+    fireEvent.dragOver(zona(), { dataTransfer: { files: [] } });
+    expect(zona()).toHaveAttribute("data-arrastrando", "true");
+    fireEvent.dragLeave(zona());
+    expect(zona()).not.toHaveAttribute("data-arrastrando");
+  });
+  it("mientras sube no acepta otro archivo soltado", () => {
+    backend();
+    render(<CvFlow />);
+    elegir(PDF());
+    fireEvent.click(screen.getByRole("button", { name: t("cv.upload.submit") }));
+    fireEvent.drop(zona(), { dataTransfer: { files: [archivo("otro.pdf", "application/pdf")] } });
+    expect(screen.queryByText("otro.pdf")).not.toBeInTheDocument();
+  });
+});
+
+describe("JB-78 estado analizando", () => {
+  it("al terminar de subir anuncia que está analizando el CV hasta que llega la respuesta", async () => {
+    backend();
+    render(<CvFlow />);
+    elegir(PDF());
+    fireEvent.click(screen.getByRole("button", { name: t("cv.upload.submit") }));
+    expect(screen.queryByText(t("cv.upload.analyzing"))).not.toBeInTheDocument();
+    FakeXHR.last.progreso(100, 100);
+    expect(screen.getByRole("status")).toHaveTextContent(t("cv.upload.analyzing"));
+    FakeXHR.last.terminar(201, CREADO());
+    await revisar();
+    expect(screen.queryByText(t("cv.upload.analyzing"))).not.toBeInTheDocument();
+  });
+});
+
+describe("JB-78 errores de red y de servicio", () => {
+  it.each([
+    [0, null, "cv.error.network"],
+    [502, "servicio_no_disponible", "cv.error.unavailable"],
+    [503, null, "cv.error.unavailable"],
+    [429, "demasiadas_solicitudes", "cv.error.tooMany"],
+  ] as const)("al subir: estado %i", async (status, error, key) => {
+    backend();
+    render(<CvFlow />);
+    elegir(PDF());
+    fireEvent.click(screen.getByRole("button", { name: t("cv.upload.submit") }));
+    if (status === 0) FakeXHR.last.fallarRed();
+    else FakeXHR.last.terminar(status, error ? { error } : {});
+    await alertaCon(t(key));
+    expect(screen.getByRole("button", { name: t("cv.upload.submit") })).toBeEnabled();
+  });
+  it("un 415 por contenido (archivo dañado o renombrado) explica qué hacer", async () => {
+    backend();
+    render(<CvFlow />);
+    elegir(PDF());
+    fireEvent.click(screen.getByRole("button", { name: t("cv.upload.submit") }));
+    FakeXHR.last.terminar(415, { error: "tipo_no_permitido" });
+    await alertaCon(/dañado/i);
   });
 });
