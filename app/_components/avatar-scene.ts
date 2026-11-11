@@ -44,7 +44,7 @@ export function createAvatarScene(canvas: HTMLCanvasElement, palette: AvatarPale
 
   const geos: BufferGeometry[] = [];
   const mats: Material[] = [];
-  const mat = (color: string) => {
+  const mat = (color: number) => {
     const m = new MeshStandardMaterial({ color: new Color(color), roughness: 0.8, flatShading: true });
     mats.push(m);
     return m;
@@ -58,10 +58,10 @@ export function createAvatarScene(canvas: HTMLCanvasElement, palette: AvatarPale
 
   const skin = mat(palette.skin);
   const hair = mat(palette.hair);
-  const dark = mat("#26202e");
-  const white = mat("#ffffff");
-  const mouthMat = mat("#7a1f33");
-  const dotMat = mat("#7c6cf0");
+  const dark = mat(0x26202e);
+  const white = mat(0xffffff);
+  const mouthMat = mat(0x7a1f33);
+  const dotMat = mat(0x7c6cf0);
 
   const root = new Group();
   scene.add(root);

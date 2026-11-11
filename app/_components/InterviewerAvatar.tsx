@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { avatarPalette, initials, speakingDurationMs, type AvatarState } from "@/lib/avatar/palette";
+import { avatarPalette, cssColor, initials, speakingDurationMs, type AvatarState } from "@/lib/avatar/palette";
 import type { AvatarScene } from "./avatar-scene";
 
 const REDUCED = "(prefers-reduced-motion: reduce)";
@@ -110,7 +110,7 @@ export default function InterviewerAvatar({ name, state }: { name: string; state
   }, [state]);
 
   return (
-    <div ref={box} className="avatar" data-state={state} data-mode={mode} style={{ "--avatar-shirt": palette.shirt, "--avatar-skin": palette.skin } as React.CSSProperties}>
+    <div ref={box} className="avatar" data-state={state} data-mode={mode} style={{ "--avatar-shirt": cssColor(palette.shirt), "--avatar-skin": cssColor(palette.skin) } as React.CSSProperties}>
       <canvas ref={canvas} className="avatar__canvas" aria-hidden="true" hidden={mode !== "canvas"} />
       {mode === "fallback" ? (
         <div className="avatar__fallback" aria-hidden="true" data-testid="avatar-fallback">
