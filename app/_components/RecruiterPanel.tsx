@@ -48,7 +48,7 @@ function Compartido({ a }: { a: SharedApplicant }) {
                 <li key={s.skill.id}>
                   {s.skill.name}
                   {s.level ? `${" · "}${t(`form.level.${s.level}`)}` : null}
-                  {s.years_of_experience !== null && s.years_of_experience !== undefined ? `${" · "}${tf("panel.skill.years", { n: s.years_of_experience })}` : null}
+                  {s.years_of_experience !== null && s.years_of_experience !== undefined ? `${" · "}${(s.years_of_experience === 1 ? t("panel.skill.yearsOne") : tf("panel.skill.years", { n: s.years_of_experience }))}` : null}
                 </li>
               ))}
             </ul>

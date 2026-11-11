@@ -716,6 +716,7 @@ export const es = {
   "panel.contact.email": "Correo",
   "panel.contact.phone": "Teléfono",
   "panel.skill.years": "{n} años",
+  "panel.skill.yearsOne": "1 año",
   "panel.experience.line": "{title} en {company}, del {start} al {end}",
   "panel.experience.lineCurrent": "{title} en {company}, desde el {start}",
   "panel.history": "Historial",
