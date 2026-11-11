@@ -143,7 +143,8 @@ describe("«Cargar más» con cursor", () => {
     expect(screen.getByRole("status")).toHaveTextContent(tf("offers.shown", { n: 3 }));
     fireEvent.click(mas()!);
     await waitFor(() => expect(tarjetas()).toHaveLength(5), ESPERA);
-    expect(within(tarjetas()[3]).getByRole("link")).toHaveFocus();
+    // El foco lo mueve un efecto que corre después de pintar las filas: se espera, no se supone.
+    await waitFor(() => expect(within(tarjetas()[3]).getByRole("link")).toHaveFocus(), ESPERA);
     expect(screen.getByRole("status")).toHaveTextContent(tf("offers.shown", { n: 5 }));
   });
   it("si falla, conserva lo visto, avisa y reintenta con el mismo cursor", async () => {
