@@ -125,7 +125,7 @@ export default function InterviewSessions() {
   }
 
   return (
-    <main className="pagina">
+    <main className="pagina pagina--ancha">
       <p className="marca">{t("brand.name")}</p>
       <h1>{t("interview.sessions.title")}</h1>
       <p className="solo-lectores" role="status">
@@ -145,6 +145,7 @@ export default function InterviewSessions() {
         <tbody>
           {filas.map((s) => {
             const fecha = formatDate(s.created_at);
+            const enlaces = acciones(s);
             return (
               <tr key={s.id}>
                 <td>{fecha}</td>
@@ -153,11 +154,16 @@ export default function InterviewSessions() {
                 <td>{ESTADO[s.status]()}</td>
                 <td>{s.score === null || s.score === undefined ? t("interview.sessions.noScore") : s.score}</td>
                 <td>
-                  {acciones(s).map((a) => (
-                    <Link key={a.href} href={a.href} aria-label={tf("interview.sessions.actionLabel", { action: a.texto, level: s.level.name, recruiter: s.recruiter.display_name, date: fecha })}>
-                      {a.texto}
-                    </Link>
-                  ))}
+                  {/* BUG-005: sin contenedor, los enlaces salían pegados («Ver resultadoVer transcripción»). */}
+                  {enlaces.length > 0 ? (
+                    <div className="tabla__acciones">
+                      {enlaces.map((a) => (
+                        <Link key={a.href} href={a.href} aria-label={tf("interview.sessions.actionLabel", { action: a.texto, level: s.level.name, recruiter: s.recruiter.display_name, date: fecha })}>
+                          {a.texto}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : null}
                 </td>
               </tr>
             );

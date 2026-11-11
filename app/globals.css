@@ -620,6 +620,25 @@ progress {
   border-bottom: 1px solid var(--borde);
 }
 
+/* Varios enlaces en una celda (BUG-005): separados por un hueco; si no caben, baja el enlace
+   entero, nunca se parte por dentro. */
+.tabla__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}
+
+.tabla__acciones a {
+  white-space: nowrap;
+}
+
+/* La lista de entrevistas (seis columnas) no cabe en 42rem: la columna de acciones deja los dos
+   enlaces uno sobre otro. Medido en navegador con Manrope, la fila más ancha posible pide 775 px
+   (cabe desde 52rem); 54rem deja margen. En pantallas angostas los enlaces bajan enteros. */
+.pagina--ancha {
+  max-width: 54rem;
+}
+
 textarea {
   resize: vertical;
 }

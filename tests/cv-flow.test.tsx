@@ -6,6 +6,7 @@ import { CREADO, CV_ID, FakeXHR, PDF, archivo, catalogoPorUrl } from "./helpers/
 import { t } from "@/lib/messages";
 import { goTo } from "@/lib/navigate";
 import CvFlow from "@/app/_components/CvFlow";
+import { alertaCon } from "./helpers/alerta";
 
 vi.mock("@/lib/navigate", () => ({ goTo: vi.fn() }));
 
@@ -87,7 +88,7 @@ describe("F3 progreso y botón deshabilitado", () => {
     elegir(PDF());
     fireEvent.click(screen.getByRole("button", { name: t("cv.upload.submit") }));
     FakeXHR.last.fallarRed();
-    expect(await screen.findByRole("alert")).toHaveTextContent(t("cv.error.generic"));
+    await alertaCon(t("cv.error.generic"));
     expect(screen.getByRole("button", { name: t("cv.upload.submit") })).toBeEnabled();
   });
 });
@@ -208,7 +209,7 @@ describe("F8 confirmar una sola vez", () => {
     await subirYRevisar();
     await revisar();
     fireEvent.click(screen.getByRole("button", { name: t("review.confirm") }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(t("cv.error.generic"));
+    await alertaCon(t("cv.error.generic"));
     expect(goTo).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: t("review.confirm") })).toBeEnabled();
   });
@@ -226,8 +227,7 @@ describe("F9 errores de la API en español", () => {
     elegir(PDF());
     fireEvent.click(screen.getByRole("button", { name: t("cv.upload.submit") }));
     FakeXHR.last.terminar(status, { error });
-    const aviso = await screen.findByRole("alert");
-    expect(aviso).toHaveTextContent(t(key));
+    const aviso = await alertaCon(t(key));
     expect(aviso.textContent).not.toMatch(/_|file|skill_id|storage|\b4\d\d\b/);
   });
   it("al confirmar: 422 se muestra en español y la persona sigue editando", async () => {
@@ -235,7 +235,7 @@ describe("F9 errores de la API en español", () => {
     await subirYRevisar();
     await revisar();
     fireEvent.click(screen.getByRole("button", { name: t("review.confirm") }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(t("cv.error.invalid"));
+    await alertaCon(t("cv.error.invalid"));
     expect(screen.getByLabelText(t("form.exp.company"))).toBeInTheDocument();
   });
   it("sesión vencida (401) al subir lleva a /sign-in", () => {
