@@ -4,8 +4,8 @@ export const SIGN_IN_PATH = "/sign-in";
 export type RouteDecision = { action: "allow" } | { action: "redirect"; to: string };
 
 /** Rutas públicas: coincidencia exacta o como carpeta (`/sign-in/...`), nunca por prefijo suelto. */
-const PUBLIC_PATHS = ["/", "/sign-in", "/sign-up", "/health", "/adios"] as const;
-const PUBLIC_FOLDERS = ["/sign-in", "/sign-up", "/health", "/_next", "/api/auth"] as const;
+const PUBLIC_PATHS = ["/", "/sign-in", "/sign-up", "/health", "/adios", "/demo"] as const;
+const PUBLIC_FOLDERS = ["/sign-in", "/sign-up", "/health", "/demo", "/_next", "/api/auth"] as const;
 /** Endpoints de CV/perfil: sin sesión responden 401 JSON ellos mismos (un redirect a HTML rompería el fetch). */
 const SELF_GUARDED_FOLDERS = [
   "/api/cvs",

@@ -453,6 +453,10 @@ export const es = {
     "Eres el único administrador de tu empresa, así que todavía no puedes borrar tu cuenta. Invita a otra persona como administradora; cuando haya aceptado, podrás borrarla. Cerrar la empresa o borrarla junto con tu cuenta aún no es posible. Tu cuenta sigue activa.",
   "account.delete.failed": "No pudimos borrar tu cuenta. Sigue activa; inténtalo de nuevo.",
 
+  "demo.metaTitle": "Demo · JobOut",
+  "demo.title": "Así funciona JobOut",
+  "demo.intro": "Recorridos grabados de la plataforma con datos inventados: la candidata, la empresa y lo que cada una puede ver.",
+  "demo.back": "Volver al inicio",
   "goodbye.title": "Tu cuenta fue borrada",
   "goodbye.body": "Gracias por haber practicado con nosotros. Si algún día quieres volver, aquí estaremos.",
   "goodbye.cta": "Crear una cuenta nueva",
