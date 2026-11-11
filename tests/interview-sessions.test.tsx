@@ -194,7 +194,8 @@ describe("«Cargar más» con cursor", () => {
     await listo();
     fireEvent.click(mas()!);
     await waitFor(() => expect(filas()).toHaveLength(5), ESPERA);
-    expect(within(filas()[3]).getAllByRole("link")[0]).toHaveFocus();
+    // El foco lo mueve un efecto que corre después de pintar: se espera, no se supone.
+    await waitFor(() => expect(within(filas()[3]).getAllByRole("link")[0]).toHaveFocus(), ESPERA);
   });
   it("anuncia cuántas hay en una región de estado", async () => {
     paginado(PAGINAS());

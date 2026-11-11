@@ -65,7 +65,8 @@ describe("carga (tres estados)", () => {
     falla = false;
     fireEvent.click(screen.getByRole("button", { name: t("interview.room.retry") }));
     expect(await screen.findByRole("textbox", { name: t("interview.room.answerLabel") }, ESPERA)).toBeInTheDocument();
-  });
+    // Dos esperas de hasta 5 s cada una no caben en el tope de 5 s por prueba: el tope tiene que cubrirlas.
+  }, 3 * ESPERA.timeout);
   it("404 -> «no encontramos esa entrevista»", async () => {
     backend((c) => (c.method === "GET" ? jsonRes(404, { error: "no_encontrado" }) : undefined));
     render(<InterviewRoom id={SID} />);
@@ -113,7 +114,8 @@ describe("F3/F4 la conversación", () => {
   });
   it("el campo recibe el foco al abrir", async () => {
     await abrir();
-    expect(campo()).toHaveFocus();
+    // El foco lo mueve un efecto que corre después de pintar: se espera, no se supone.
+    await waitFor(() => expect(campo()).toHaveFocus(), ESPERA);
   });
 });
 
@@ -133,7 +135,8 @@ describe("F5 enviar", () => {
     expect(llamadasA(llamadas, "/turns")[0].body).toEqual({ text: "Hice una API de pagos" });
     soltar(jsonRes(201, RESPUESTA));
     await waitFor(() => expect(campo()).toBeEnabled(), ESPERA);
-    expect(campo()).toHaveFocus();
+    // El foco lo mueve un efecto que corre después de pintar: se espera, no se supone.
+    await waitFor(() => expect(campo()).toHaveFocus(), ESPERA);
     expect(screen.queryByText(tf("interview.room.status.thinking", { name: "Ana" }))).toBeNull();
   });
   it("con Ctrl+Enter (y Cmd+Enter) envía; Enter solo no envía", async () => {
@@ -235,7 +238,8 @@ describe("F7 fallos y reintento sin perder lo escrito", () => {
     expect(alerta.closest('[role="alert"]')).not.toBeNull();
     expect(campo()).toHaveValue("Mi respuesta larga e importante");
     expect(campo()).toBeEnabled();
-    expect(campo()).toHaveFocus();
+    // El foco lo mueve un efecto que corre después de pintar: se espera, no se supone.
+    await waitFor(() => expect(campo()).toHaveFocus(), ESPERA);
     falla = false;
     fireEvent.click(screen.getByRole("button", { name: t("interview.room.retrySend") }));
     await screen.findByText(RESPUESTA.turn.text, { selector: "li *, li" }, ESPERA);
