@@ -254,6 +254,16 @@ describe("BUG-005: «Ver resultado» y «Ver transcripción» no salen pegados",
     expect(hueco).not.toMatch(/^0(?:[a-z%]*)?(?:\s|$)/);
     expect(regla(".tabla__acciones a")).toMatch(/white-space\s*:\s*nowrap\b/);
   });
+  it("la lista se pinta en una página ancha: con 42rem los dos enlaces quedan uno sobre otro; la tabla más ancha posible mide 775 px y cabe desde 52rem", async () => {
+    // Medido en navegador con Manrope: «10 nov 2026 · McKinsey · Martín · Abandonada · Sin score ·
+    // Ver resultado Ver transcripción» sin partir ninguna celda; 52rem deja 784 px de contenido.
+    paginado({ "": pagina([RESUMEN({ id: uuid(1) })]) });
+    render(<InterviewSessions />);
+    await listo();
+    expect(screen.getByRole("main")).toHaveClass("pagina", "pagina--ancha");
+    const ancho = regla(".pagina--ancha").match(/max-width\s*:\s*([\d.]+)rem/)?.[1];
+    expect(Number(ancho)).toBeGreaterThanOrEqual(52);
+  });
 });
 
 describe("accesibilidad", () => {
