@@ -513,7 +513,7 @@ export const es = {
   "company.invitation.expires": "vence el {date}",
   "company.error.unverified": "Tu empresa todavía no está verificada: aún no puede hacer esto.",
   "company.error.expired": "La membresía de tu empresa no está vigente: renuévala para hacer esto.",
-  "company.error.noPermission": "Tu rol en la empresa no permite hacer esto.",
+  "company.error.noPermission": "Tu cuenta no tiene permiso para esto. Si trabajas en una empresa que usa JobOut, pídele a quien la administra que te invite o te dé el acceso.",
   "company.error.notFound": "No encontramos lo que buscas, o no es de tu empresa.",
   "company.error.invitation": "Ese código no sirve: puede estar vencido, ya usado, revocado o ser para otra cuenta.",
   "company.error.alreadyMember": "Ya perteneces a una empresa. Por ahora cada persona pertenece a una sola.",
